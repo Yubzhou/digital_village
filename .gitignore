@@ -7,4 +7,4 @@ node_modules/
 # 忽略 mysql_tools.py 文件内容
 utils/爬取新闻脚本/mysql_tools.py
 # 忽略 public/uploads/e-participation 文件夹下的全部文件
-app/public/uploads/e-participation/
+app/public/uploads/e-participation/*
