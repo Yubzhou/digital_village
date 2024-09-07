@@ -1,6 +1,7 @@
 import express from "express";
 import { querySql } from "../utils/dbTools.js";
 import jsondata from "../utils/jsondata.js";
+import adminAuthMiddleware from "../middlewares/adminAuthMiddleware.js";
 
 const router = express.Router();
 
@@ -16,8 +17,9 @@ async function getTotal() {
   return result.length > 0 ? result[0].total : 0;
 }
 
+// 判断是否为管理员权限
 // 获取留言
-router.get("/feedbacks", async (req, res) => {
+router.get("/feedbacks", adminAuthMiddleware, async (req, res) => {
   let { part, page, size } = Object.assign(defaultOptions, req.query);
   part = part === "true";
   page = parseInt(page);

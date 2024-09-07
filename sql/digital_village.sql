@@ -60,7 +60,7 @@ CREATE TABLE `refresh_tokens`
 CREATE TABLE `captcha`
 (
     `captcha_id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '会话ID',
-    `code`       CHAR(4) NOT NULL COMMENT '4位验证码'
+    `captcha_code`       CHAR(4) NOT NULL COMMENT '4位验证码'
 );
 
 
@@ -103,3 +103,6 @@ CREATE TABLE `e_participation`
 
 
 
+# UPDATE `captcha` SET `captcha_code`='sni7' WHERE `captcha_id` = 1;
+
+DELETE FROM `e_participation` WHERE `id`=37 LIMIT 1;

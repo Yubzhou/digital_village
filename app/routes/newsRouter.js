@@ -5,7 +5,6 @@ import jsondata from "../utils/jsondata.js";
 const router = express.Router();
 
 router.get("/news", async (req, res) => {
-  const { category } = req.params;
   // 查询数据库获取新闻列表
   const sql = "SELECT `news_title`, `news_url`, `news_date` FROM `news` ORDER BY `news_id` LIMIT 30";
   const result = await executeSql(sql);

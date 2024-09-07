@@ -7,8 +7,10 @@ import https from "https";
 
 // 导入mkcert配置，导入https证书
 import mkcertOptions from "./app/config/mkcertConfig.js";
-// 导入express-jwt配置，用于验证token
-import jwtAuth from "./app/routes/jwtAuth.js";
+
+// 导入中间件
+// 导入express-jwt配置中间件，用于验证token
+import jwtAuth from "./app/middlewares/jwtAuthMiddleware.js";
 
 // 导入路由
 import userTestRouter from "./app/routes/userTestRouter.js";
@@ -28,9 +30,9 @@ const app = express();
 // 配置 cors 中间件
 const corsOptions = {
   // 如果希望请求包含 cookies 或其他认证信息，这要求服务器响应中 Access-Control-Allow-Origin 必须指定一个确切的源，而不是 *。
-  origin: ["https://127.0.0.1:5500", "https://localhost:5500", "http://localhost:5173", "http://127.0.0.1:5173"], // 允许的域名，可以用数组指定多个
-  credentials: true, // 设置为 true，允许发送 cookie
-  methods: ["GET", "POST"], // 允许的HTTP请求类型
+  origin: ["https://127.0.0.1:5500", "https://localhost:5500", "https://localhost:5173", "https://127.0.0.1:5173"], // 允许的域名，可以用数组指定多个
+  // credentials: true, // 设置为 true，允许发送 cookie
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // 允许的HTTPS请求类型
   allowedHeaders: ["Content-Type", "Authorization"], // 允许的请求头
 };
 // 允许跨域请求

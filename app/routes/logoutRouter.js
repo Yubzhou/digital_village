@@ -12,7 +12,7 @@ const router = express.Router();
 // 刷新AccessToken
 router.post("/refresh", async (req, res) => {
   // 从请求头中获取refreshToken
-  const refreshToken = req.headers.authorization.split(" ")[1];
+  const refreshToken = req.body.refreshToken;
 
   try {
     const decoded = jwt.verify(refreshToken, jwtConfig.REFRESH_SECRET_KEY);
@@ -38,7 +38,7 @@ router.post("/refresh", async (req, res) => {
     // console.log(decodedNewRefreshToken.exp - decodedNewRefreshToken.iat);
 
     // 返回新的AccessToken和RefreshToken
-    res.json(jsondata("0000", "刷新成功", { accessToken: newAccessToken, refreshToken: newRefreshToken }));
+    res.json(jsondata("0000", "刷新成功", { tokens: { accessToken: newAccessToken, refreshToken: newRefreshToken } }));
   } catch (error) {
     // console.log(error);
     if (error.name === "TokenExpiredError") {
@@ -46,18 +46,19 @@ router.post("/refresh", async (req, res) => {
     } else if (error.name === "JsonWebTokenError") {
       res.status(500).json(jsondata("1002", "JsonWebTokenError", error));
     } else if (error.name === "NotBeforeError") {
-      res.status( 500).json(jsondata("1003", "NotBeforeError: jwt未激活", error));
+      res.status(500).json(jsondata("1003", "NotBeforeError: jwt未激活", error));
     }
   }
 });
 
 // 注销
 router.post("/logout", async (req, res) => {
-  // 从请求头中获取refreshToken
-  const refreshToken = req.headers.authorization.split(" ")[1];
+  // 从请求头中获取用户id
+  console.log(req.auth);
+
+  const { sub: userID } = req.auth;
   try {
-    const decoded = jwt.verify(refreshToken, jwtConfig.REFRESH_SECRET_KEY);
-    await executeSql("DELETE FROM `refresh_tokens` WHERE `user_id`=? LIMIT 1", [decoded.sub]);
+    await executeSql("DELETE FROM `refresh_tokens` WHERE `user_id`=? LIMIT 1", [userID]);
     res.json(jsondata("0000", "注销成功", ""));
   } catch (error) {
     // console.error(error);

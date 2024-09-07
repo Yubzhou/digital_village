@@ -9,7 +9,7 @@ export function checkEmpty(arr) {
 // 检查 account 是否符合手机号、邮箱、用户名格式
 export function checkAccount(account) {
   // 手机号为11位数字
-  const phoneRegex = /^\d{11}$/;
+  const phoneRegex = /^1[3-9]\d{9}$/;
   // 正则表达式用于匹配邮箱
   const emailRegex = /^[\w]+(\.[\w]+)*@[\w]+(\.[\w])+$/;
   // 正则表达式用于匹配用户名

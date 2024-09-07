@@ -6,6 +6,7 @@ import { fileURLToPath } from "url";
 // 导入自定义模块
 import { executeSql, querySql } from "../utils/dbTools.js";
 import jsondata from "../utils/jsondata.js";
+import adminAuthMiddleware from "../middlewares/adminAuthMiddleware.js";
 
 const router = express.Router();
 
@@ -84,11 +85,7 @@ async function getTotal() {
 }
 
 // 获取问政信息列表
-router.get("/e-participation/all", async (req, res) => {
-  // 判断是否为管理员权限
-  const { isAdmin } = req.auth;
-  if (!isAdmin) return res.json(jsondata("1002", "无权限", null));
-
+router.get("/e-participation/all", adminAuthMiddleware, async (req, res) => {
   let { part, page, size } = Object.assign(defaultOptions, req.query);
   part = part === "true";
   page = parseInt(page);
@@ -129,6 +126,33 @@ router.get("/e-participation/self", async (req, res) => {
     return res.json(jsondata("0000", "获取成功", result));
   } catch (error) {
     return res.json(jsondata("1001", "获取失败", error));
+  }
+});
+
+// 删除指定id的问政信息
+router.delete("/e-participation/delete/:id", async (req, res) => {
+  // 获取问政文章id
+  const { id } = req.params;
+  // 获取当前用户id，以及是否为管理员
+  const { sub: userID, isAdmin } = req.auth;
+
+  try {
+    let result;
+    if (isAdmin) {
+      // 如果是管理员，则可以删除任意用户的问政信息
+      const sql = "DELETE FROM `e_participation` WHERE `id`=? LIMIT 1";
+      result = await executeSql(sql, [id]);
+    } else {
+      // 如果不是管理员，则只能删除自己的问政信息
+      const sql = "DELETE FROM `e_participation` WHERE `id`=? AND `user_id`=? LIMIT 1";
+      result = await executeSql(sql, [id, userID]);
+    }
+    if (result.affectedRows === 0) {
+      return res.json(jsondata("1002", "删除失败，问政信息不存在。请检查id是否正确。", ''));
+    }
+    return res.json(jsondata("0000", "删除成功"));
+  } catch (error) {
+    return res.json(jsondata("1001", "删除失败", error));
   }
 });
 
