@@ -1,5 +1,6 @@
 import express from "express";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 import { executeSql } from "../utils/dbTools.js";
 import { checkEmpty, checkAccount } from "../utils/checkData.js";
 import jsondata from "../utils/jsondata.js";
@@ -37,22 +38,33 @@ async function getUserByAccount(account) {
 }
 
 // 生成token
-async function generateToken(user_id, username) {
+async function generateToken(user_id, username, isAdmin) {
   // 生成的accessToken和refreshToken的签发时间一样
   const now = Math.floor(Date.now() / 1000);
-  const payload = { sub: user_id, username, iat: now, exp: now + jwtConfig.ACCESS_TOKEN_EXPIRATION };
+  const payload = { sub: user_id, username, isAdmin, iat: now, exp: now + jwtConfig.ACCESS_TOKEN_EXPIRATION };
   const accessToken = jwt.sign(payload, jwtConfig.ACCESS_SECRET_KEY);
   // 为了防止生成的两个token一样，为refreshToken添加一个isRefresh字段
   payload.isRefresh = true;
   payload.exp = now + jwtConfig.REFRESH_TOKEN_EXPIRATION;
   const refreshToken = jwt.sign(payload, jwtConfig.REFRESH_SECRET_KEY);
 
+  let sql;
   // 保存refreshToken到数据库
-  sql = "INSERT INTO `refresh_tokens` (`user_id`, `iat`, `exp`) VALUES (?, ?, ?)";
-  await executeSql(sql, [user.user_id, now, payload.exp]);
-
-  // 返回带 Bearer 前缀的token
-  return { accessToken: "Bearer " + accessToken, refreshToken: "Bearer " + refreshToken };
+  try {
+    sql = "INSERT INTO `refresh_tokens` (`user_id`, `iat`, `exp`) VALUES (?, ?, ?)";
+    await executeSql(sql, [user_id, now, payload.exp]);
+  } catch (error) {
+    // console.log(error);
+    // 如果refreshToken已经存在，则更新refreshToken的过期时间
+    if (error.code === "ER_DUP_ENTRY") {
+      sql = "UPDATE `refresh_tokens` SET `iat`=?, `exp`=? WHERE `user_id`=? LIMIT 1";
+      await executeSql(sql, [now, payload.exp, user_id]);
+    } else {
+      throw error;
+    }
+  }
+  // 返回token
+  return { accessToken, refreshToken };
 }
 
 // 用户登录
@@ -75,11 +87,11 @@ router.post("/login", async (req, res) => {
     }
 
     // 生成token
-    const BearerTokens = await generateToken(user.user_id, user.username);
+    const BearerTokens = await generateToken(user.user_id, user.username, user.is_admin);
     // 登录成功
-    res.json(jsondata("0000", "登录成功", { userID: user.user_id, username: user.username, tokens: BearerTokens }));
+    res.json(jsondata("0000", "登录成功", { userID: user.user_id, username: user.username, isAdmin: user.is_admin, tokens: BearerTokens }));
   } catch (error) {
-    res.status(500).json(jsondata("1001", "登录失败", ""));
+    res.status(500).json(jsondata("1001", "登录失败", error));
   }
 });
 

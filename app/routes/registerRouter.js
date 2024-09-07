@@ -69,7 +69,7 @@ router.post("/register", clearCookie, async (req, res) => {
     result = await executeSql(sql, [username, hashedPassword, phone]);
   } catch (error) {
     // console.log(error);
-    return res.json(jsondata("1002", "注册失败", error.message));
+    return res.json(jsondata("1002", "注册失败", error));
   }
 
   // 注册成功，返回响应信息

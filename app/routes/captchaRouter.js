@@ -1,6 +1,7 @@
 import express from "express";
 import pool from "../config/dbConfig.js";
 import createCaptcha from "../utils/captchaTools.js";
+import jsondata from "../utils/jsondata.js";
 
 const router = express.Router();
 

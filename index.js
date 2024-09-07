@@ -37,7 +37,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // 验证token
-// app.use(jwtAuth);
+app.use(jwtAuth);
 
 // 解析cookie
 app.use(cookieParser());
@@ -87,7 +87,7 @@ app.all("*", (req, res) => {
 
 // 处理报错
 app.use((err, req, res, next) => {
-  console.log(err);
+  // console.log(err);
   if (err.name === "UnauthorizedError") {
     res.status(401).json(jsondata(err.status, err.inner.message, err));
   } else {

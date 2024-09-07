@@ -17,7 +17,6 @@ CREATE TABLE `users`
 );
 
 
-
 # 用户详情表
 CREATE TABLE `user_details`
 (
@@ -46,7 +45,6 @@ END//
 DELIMITER ;
 
 
-
 # refresh_tokens表结构
 CREATE TABLE `refresh_tokens`
 (
@@ -58,14 +56,12 @@ CREATE TABLE `refresh_tokens`
 );
 
 
-
 # 图片验证码
 CREATE TABLE `captcha`
 (
     `captcha_id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '会话ID',
     `code`       CHAR(4) NOT NULL COMMENT '4位验证码'
 );
-
 
 
 # 新闻
@@ -79,7 +75,6 @@ CREATE TABLE `news`
 );
 
 
-
 # 留言反馈
 CREATE TABLE `feedbacks`
 (
@@ -91,16 +86,20 @@ CREATE TABLE `feedbacks`
 );
 
 
-
 # 问政
 CREATE TABLE `e_participation`
 (
     `id`           INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增键',
+    `user_id`      INT          NOT NULL COMMENT '用户id',
     `username`     VARCHAR(25)  NOT NULL COMMENT '用户名',
     `title`        VARCHAR(255) NOT NULL COMMENT '标题',
     `content`      TEXT         NOT NULL COMMENT '内容',
     `location`     VARCHAR(255) NOT NULL COMMENT '地址',
     `address`      VARCHAR(255) NOT NULL COMMENT '详细地址（不包括省市区，只包括手动填写的详细地址）',
     `images`       TEXT         NOT NULL COMMENT '多张图片地址url（使用,分隔）',
+    `status`       TINYINT  DEFAULT 1 COMMENT '文章状态：1为待回复，2为已回复',
     `publish_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '发布时间'
 );
+
+
+

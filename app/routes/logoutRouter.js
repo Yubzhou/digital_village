@@ -1,4 +1,6 @@
 import express from "express";
+import jwt from "jsonwebtoken";
+
 import { executeSql } from "../utils/dbTools.js";
 import jsondata from "../utils/jsondata.js";
 
@@ -22,7 +24,7 @@ router.post("/refresh", async (req, res) => {
 
     // 新生成的AccessToken和RefreshToken的签发时间一样
     const now = Math.floor(Date.now() / 1000);
-    const payload = { sub: decoded.sub, username: decoded.username, iat: now, exp: now + jwtConfig.ACCESS_TOKEN_EXPIRATION };
+    const payload = { sub: decoded.sub, username: decoded.username, isAdmin: decoded.isAdmin, iat: now, exp: now + jwtConfig.ACCESS_TOKEN_EXPIRATION };
     const newAccessToken = jwt.sign(payload, jwtConfig.ACCESS_SECRET_KEY);
     // 为了防止生成的两个token一样，为refreshToken添加一个isRefresh字段
     payload.isRefresh = true;
@@ -35,16 +37,16 @@ router.post("/refresh", async (req, res) => {
     // console.log(decodedNewRefreshToken);
     // console.log(decodedNewRefreshToken.exp - decodedNewRefreshToken.iat);
 
-    // 返回新的带有Bearer的AccessToken和RefreshToken
-    res.json(jsondata("0000", "刷新成功", { accessToken: "Bearer " + newAccessToken, refreshToken: "Bearer " + newRefreshToken }));
+    // 返回新的AccessToken和RefreshToken
+    res.json(jsondata("0000", "刷新成功", { accessToken: newAccessToken, refreshToken: newRefreshToken }));
   } catch (error) {
     // console.log(error);
     if (error.name === "TokenExpiredError") {
-      res.status(500).json(jsondata("1001", "TokenExpiredError: 登录已过期, 请重新登录", error.message));
+      res.status(500).json(jsondata("1001", "TokenExpiredError: 登录已过期, 请重新登录", error));
     } else if (error.name === "JsonWebTokenError") {
-      res.status(500).json(jsondata("1002", "JsonWebTokenError", error.message));
+      res.status(500).json(jsondata("1002", "JsonWebTokenError", error));
     } else if (error.name === "NotBeforeError") {
-      res.status(500).json(jsondata("1003", "NotBeforeError: jwt未激活", error.message));
+      res.status( 500).json(jsondata("1003", "NotBeforeError: jwt未激活", error));
     }
   }
 });
@@ -59,7 +61,7 @@ router.post("/logout", async (req, res) => {
     res.json(jsondata("0000", "注销成功", ""));
   } catch (error) {
     // console.error(error);
-    res.status(500).json(jsondata("1001", "注销失败", ""));
+    res.status(500).json(jsondata("1001", "注销失败", error));
   }
 });
 

@@ -4,7 +4,7 @@ import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
 // 导入自定义模块
-import { executeSql } from "../utils/dbTools.js";
+import { executeSql, querySql } from "../utils/dbTools.js";
 import jsondata from "../utils/jsondata.js";
 
 const router = express.Router();
@@ -41,7 +41,7 @@ const upload = multer({
 
 // 保存信息到MySQL数据库
 async function saveInfoToMySQL(req, res, params) {
-  const sql = "INSERT INTO e_participation (`username`, `title`, `content`, `location`, `address`, `images`) VALUES (?,?,?,?,?,?)";
+  const sql = "INSERT INTO e_participation (`user_id`, `username`, `title`, `content`, `location`, `address`, `images`) VALUES (?,?,?,?,?,?,?)";
   try {
     const result = await executeSql(sql, params);
     return result;
@@ -51,18 +51,84 @@ async function saveInfoToMySQL(req, res, params) {
   }
 }
 
-// array 表示接受多个文件，input name="pic"
-router.post("/e-participation", upload.array("pic", 9), async (req, res) => {
-  const { username, title, content, location, address } = req.body;
+// post提交多个问政信息, array 表示接受多个文件，input name="pic"
+router.post("/e-participation/post", upload.array("pic", 9), async (req, res) => {
+  const { userID, username, title, content, location, address } = req.body;
+  // console.log(req.body);
   // console.log(req.files);
   const images = req.files.map((file) => "/public/uploads/e-participation/" + file.filename).join(",");
-  const params = [username, title, content, location, address, images];
+  const params = [userID, username, title, content, location, address, images];
   try {
     const result = await saveInfoToMySQL(req, res, params);
     return res.json(jsondata("0000", "提交成功", result));
   } catch (error) {
     console.log(error);
     return res.json(jsondata("1001", "提交失败", error));
+  }
+});
+
+// ================================================================
+
+// 默认分页配置
+const defaultOptions = {
+  part: true,
+  page: 1,
+  size: 10,
+};
+
+// 获取数据库总问政文章总数
+async function getTotal() {
+  const sql = "SELECT COUNT(*) AS `total` FROM `e_participation`";
+  const result = await querySql(sql);
+  return result.length > 0 ? result[0].total : 0;
+}
+
+// 获取问政信息列表
+router.get("/e-participation/all", async (req, res) => {
+  // 判断是否为管理员权限
+  const { isAdmin } = req.auth;
+  if (!isAdmin) return res.json(jsondata("1002", "无权限", null));
+
+  let { part, page, size } = Object.assign(defaultOptions, req.query);
+  part = part === "true";
+  page = parseInt(page);
+  size = parseInt(size);
+  const [offset, limit] = [(page - 1) * size, size];
+
+  // 获取问政总数
+  const total = await getTotal();
+  try {
+    let result;
+    if (part) {
+      const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `publish_time` FROM `e_participation` ORDER BY `id` DESC LIMIT ?, ?";
+      result = await querySql(sql, [offset, limit]);
+    } else {
+      const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `publish_time` FROM `e_participation` ORDER BY `id` DESC";
+      result = await querySql(sql);
+    }
+
+    result = {
+      total,
+      list: result,
+    };
+    return res.json(jsondata("0000", "获取成功", result));
+  } catch (error) {
+    return res.json(jsondata("1001", "获取失败", error));
+  }
+});
+
+// 获取指定用户发布的问政信息, 按最新发布时间排序
+router.get("/e-participation/self", async (req, res) => {
+  // console.log(req.headers.authorization);
+  // console.log(req.auth);
+  // 获取当前用户id
+  const { sub: userID } = req.auth;
+  try {
+    const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `publish_time` FROM `e_participation` WHERE `user_id`=? ORDER BY `id` DESC";
+    const result = await executeSql(sql, [userID]);
+    return res.json(jsondata("0000", "获取成功", result));
+  } catch (error) {
+    return res.json(jsondata("1001", "获取失败", error));
   }
 });
 
