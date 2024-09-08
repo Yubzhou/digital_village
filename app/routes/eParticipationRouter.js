@@ -115,7 +115,7 @@ router.get("/e-participation/batch", adminAuthMiddleware, async (req, res) => {
       result = await querySql(sql, [offset, limit]);
     } else {
       const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time` FROM `e_participation` ORDER BY `id` DESC";
-      result = await querySql(sql);
+      result = await executeSql(sql);
     }
 
     result = {
@@ -139,7 +139,7 @@ async function getArticleByUserID(userID, options) {
     if (part) {
       const sql =
         "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time` FROM `e_participation` WHERE `user_id`=? ORDER BY `id` DESC LIMIT ?, ?";
-      result = await executeSql(sql, [userID, offset, limit]);
+      result = await querySql(sql, [userID, offset, limit]);
     } else {
       const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time` FROM `e_participation` WHERE `user_id`=? ORDER BY `id` DESC";
       result = await executeSql(sql, [userID]);
@@ -190,7 +190,7 @@ router.get("/e-participation/unreply", adminAuthMiddleware, async (req, res) => 
       result = await querySql(sql, [offset, limit]);
     } else {
       const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `publish_time` FROM `e_participation` WHERE `status`=0 ORDER BY `id` DESC";
-      result = await querySql(sql);
+      result = await executeSql(sql);
     }
     result = {
       total,

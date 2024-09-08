@@ -1,5 +1,5 @@
 import express from "express";
-import { querySql } from "../utils/dbTools.js";
+import { executeSql, querySql } from "../utils/dbTools.js";
 import jsondata from "../utils/jsondata.js";
 import adminAuthMiddleware from "../middlewares/adminAuthMiddleware.js";
 
@@ -41,7 +41,7 @@ router.get("/feedbacks", adminAuthMiddleware, async (req, res) => {
       // 如果是全部获取
       const sql = "SELECT `user_id`, `username`, `message`, `publish_time` FROM `feedbacks` ORDER BY `id` DESC";
       // 只能使用querySql方法，不能使用executeSql方法
-      result = await querySql(sql);
+      result = await executeSql(sql);
     }
 
     result = {
