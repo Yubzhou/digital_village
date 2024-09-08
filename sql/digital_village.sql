@@ -101,3 +101,4 @@ CREATE TABLE `e_participation`
     `reply`        TEXT COMMENT '回复内容',
     `publish_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '发布时间'
 );
+

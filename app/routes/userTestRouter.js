@@ -32,7 +32,7 @@ router.get("/users", async (req, res) => {
 });
 
 // 查询单个用户信息
-router.get("/users/:id", async (req, res) => {
+router.get("/users/:id(\\d+)", async (req, res) => {
   const { id } = req.params;
   const sql = `SELECT * FROM ${TABLE_NAME} WHERE \`id\`=?`;
   try {
@@ -57,7 +57,7 @@ router.post("/users", async (req, res) => {
 });
 
 // 更新用户信息
-router.put("/users/:id", async (req, res) => {
+router.put("/users/:id(\\d+)", async (req, res) => {
   const { id } = req.params;
   const sql = `UPDATE ${TABLE_NAME} SET ? WHERE \`id\`=?`;
   try {
@@ -70,7 +70,7 @@ router.put("/users/:id", async (req, res) => {
 });
 
 // 部分更新用户信息
-router.patch("/users/:id", async (req, res) => {
+router.patch("/users/:id(\\d+)", async (req, res) => {
   const { id } = req.params;
   // console.log(req.body);
   const sql = `UPDATE ${TABLE_NAME} SET ? WHERE \`id\`= ?`;
@@ -85,7 +85,7 @@ router.patch("/users/:id", async (req, res) => {
 });
 
 // 删除用户信息
-router.delete("/users/:id", async (req, res) => {
+router.delete("/users/:id(\\d+)", async (req, res) => {
   const { id } = req.params;
   const sql = `DELETE FROM ${TABLE_NAME} WHERE \`id\`=?`;
   try {
