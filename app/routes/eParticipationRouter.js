@@ -54,10 +54,14 @@ async function saveInfoToMySQL(req, res, params) {
 
 // post提交多个问政信息, array 表示接受多个文件，input name="pic"
 router.post("/e-participation/post", upload.array("pic", 9), async (req, res) => {
-  const { userID, username, title, content, location, address } = req.body;
+  if (!req.auth) {
+    return res.json(jsondata("1002", "请先登录", ""));
+  }
+  const { userID, username } = req.auth;
+  const { title, content, location, address } = req.body;
+  const images = req.files.map((file) => "/public/uploads/e-participation/" + file.filename).join(",");
   // console.log(req.body);
   // console.log(req.files);
-  const images = req.files.map((file) => "/public/uploads/e-participation/" + file.filename).join(",");
   const params = [userID, username, title, content, location, address, images];
   try {
     const result = await saveInfoToMySQL(req, res, params);
@@ -84,8 +88,8 @@ async function getTotal() {
   return result.length > 0 ? result[0].total : 0;
 }
 
-// 获取问政信息列表
-router.get("/e-participation/all", adminAuthMiddleware, async (req, res) => {
+// 批量获取问政信息列表，需要管理员权限
+router.get("/e-participation/batch", adminAuthMiddleware, async (req, res) => {
   let { part, page, size } = Object.assign(defaultOptions, req.query);
   part = part === "true";
   page = parseInt(page);
@@ -114,15 +118,47 @@ router.get("/e-participation/all", adminAuthMiddleware, async (req, res) => {
   }
 });
 
-// 获取指定用户发布的问政信息, 按最新发布时间排序
+// 获取指定userID的问政信息
+async function getArticleByUserID(userID) {
+  try {
+    const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time` FROM `e_participation` WHERE `user_id`=? ORDER BY `id` DESC";
+    const result = await executeSql(sql, [userID]);
+    // return res.json(jsondata("0000", "获取成功", result));
+    return result;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// 获取用户自己发布的问政信息, 按最新发布时间排序
 router.get("/e-participation/self", async (req, res) => {
-  // console.log(req.headers.authorization);
-  // console.log(req.auth);
   // 获取当前用户id
   const { sub: userID } = req.auth;
   try {
-    const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `publish_time` FROM `e_participation` WHERE `user_id`=? ORDER BY `id` DESC";
-    const result = await executeSql(sql, [userID]);
+    const result = await getArticleByUserID(userID);
+    return res.json(jsondata("0000", "获取成功", result));
+  } catch (error) {
+    return res.json(jsondata("1001", "获取失败", error));
+  }
+});
+
+// 获取指定userID的问政信息，按最新发布时间排序，需要管理员权限
+router.get("/e-participation/:userID", adminAuthMiddleware, async (req, res) => {
+  // 获取问政用户id
+  const { userID } = req.params;
+  try {
+    const result = await getArticleByUserID(userID);
+    return res.json(jsondata("0000", "获取成功", result));
+  } catch (error) {
+    return res.json(jsondata("1001", "获取失败", error));
+  }
+});
+
+// 获取未回复的问政信息，按最新发布时间排序，需要管理员权限
+router.get("/e-participation/unreply", adminAuthMiddleware, async (req, res) => {
+  try {
+    const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `publish_time` FROM `e_participation` WHERE `status`=0 ORDER BY `id` DESC";
+    const result = await executeSql(sql);
     return res.json(jsondata("0000", "获取成功", result));
   } catch (error) {
     return res.json(jsondata("1001", "获取失败", error));
@@ -148,11 +184,27 @@ router.delete("/e-participation/delete/:id", async (req, res) => {
       result = await executeSql(sql, [id, userID]);
     }
     if (result.affectedRows === 0) {
-      return res.json(jsondata("1002", "删除失败，问政信息不存在。请检查id是否正确。", ''));
+      return res.json(jsondata("1002", "删除失败，问政信息不存在。请检查id是否正确。", ""));
     }
-    return res.json(jsondata("0000", "删除成功"));
+    return res.json(jsondata("0000", "删除成功", ""));
   } catch (error) {
     return res.json(jsondata("1001", "删除失败", error));
+  }
+});
+
+// 回复问政信息，需要管理员权限
+router.patch("/e-participation/reply", adminAuthMiddleware, async (req, res) => {
+  // 获取问政文章id, 回复内容
+  const { id, reply } = req.body;
+  try {
+    const sql = "UPDATE `e_participation` SET `reply`=?, `status`=? WHERE `id`=? LIMIT 1";
+    const result = await executeSql(sql, [reply, 1, id]);
+    if (result.affectedRows === 0) {
+      return res.json(jsondata("1002", "回复失败，问政信息不存在。请检查id是否正确。", ""));
+    }
+    return res.json(jsondata("0000", "回复成功", ""));
+  } catch (error) {
+    return res.json(jsondata("1001", "回复失败", error));
   }
 });
 

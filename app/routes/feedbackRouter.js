@@ -5,23 +5,24 @@ import adminAuthMiddleware from "../middlewares/adminAuthMiddleware.js";
 
 const router = express.Router();
 
+// 默认分页参数
 const defaultOptions = {
   part: true,
   page: 1,
   size: 10,
 };
 
+// 获取留言总数
 async function getTotal() {
   const sql = "SELECT COUNT(*) AS `total` FROM `feedbacks`";
   const result = await querySql(sql);
   return result.length > 0 ? result[0].total : 0;
 }
 
-// 判断是否为管理员权限
-// 获取留言
+// 批量获取留言，需要管理员权限
 router.get("/feedbacks", adminAuthMiddleware, async (req, res) => {
   let { part, page, size } = Object.assign(defaultOptions, req.query);
-  part = part === "true";
+  part = (part === "true");
   page = parseInt(page);
   size = parseInt(size);
 

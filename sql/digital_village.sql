@@ -59,8 +59,8 @@ CREATE TABLE `refresh_tokens`
 # 图片验证码
 CREATE TABLE `captcha`
 (
-    `captcha_id` INT AUTO_INCREMENT PRIMARY KEY COMMENT '会话ID',
-    `captcha_code`       CHAR(4) NOT NULL COMMENT '4位验证码'
+    `captcha_id`   INT AUTO_INCREMENT PRIMARY KEY COMMENT '会话ID',
+    `captcha_code` CHAR(4) NOT NULL COMMENT '4位验证码'
 );
 
 
@@ -94,15 +94,10 @@ CREATE TABLE `e_participation`
     `username`     VARCHAR(25)  NOT NULL COMMENT '用户名',
     `title`        VARCHAR(255) NOT NULL COMMENT '标题',
     `content`      TEXT         NOT NULL COMMENT '内容',
-    `location`     VARCHAR(255) NOT NULL COMMENT '地址',
+    `location`     VARCHAR(255) NOT NULL COMMENT '地址（省市区）',
     `address`      VARCHAR(255) NOT NULL COMMENT '详细地址（不包括省市区，只包括手动填写的详细地址）',
     `images`       TEXT         NOT NULL COMMENT '多张图片地址url（使用,分隔）',
-    `status`       TINYINT  DEFAULT 1 COMMENT '文章状态：1为待回复，2为已回复',
+    `status`       TINYINT  DEFAULT 0 COMMENT '文章状态：0为待回复，1为已回复',
+    `reply`        TEXT COMMENT '回复内容',
     `publish_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '发布时间'
 );
-
-
-
-# UPDATE `captcha` SET `captcha_code`='sni7' WHERE `captcha_id` = 1;
-
-DELETE FROM `e_participation` WHERE `id`=37 LIMIT 1;

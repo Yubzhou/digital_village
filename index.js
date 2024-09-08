@@ -1,6 +1,6 @@
 import express from "express";
 import cors from "cors";
-import cookieParser from "cookie-parser";
+// import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import https from "https";
@@ -42,7 +42,7 @@ app.use(cors(corsOptions));
 app.use(jwtAuth);
 
 // 解析cookie
-app.use(cookieParser());
+// app.use(cookieParser());
 // 解析请求体
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -93,7 +93,7 @@ app.use((err, req, res, next) => {
   if (err.name === "UnauthorizedError") {
     res.status(401).json(jsondata(err.status, err.inner.message, err));
   } else {
-    res.status(500).json(jsondata(5000, "服务器内部错误", err));
+    res.status(500).json(jsondata('5000', "服务器内部错误", err));
   }
 });
 
