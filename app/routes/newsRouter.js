@@ -21,7 +21,7 @@ router.get("/news", async (req, res) => {
   }, {});
 
   // 返回新闻列表
-  res.json(jsondata("0000", "获取新闻列表成功", newsObj));
+  return res.json(jsondata("0000", "获取新闻列表成功", newsObj));
 });
 
 export default router;

@@ -102,8 +102,8 @@ function getOptions(options) {
   }
 }
 
-// 批量获取问政信息列表，需要管理员权限
-router.get("/e-participation/batch", adminAuthMiddleware, async (req, res) => {
+// 批量获取问政信息列表
+router.get("/e-participation/batch", async (req, res) => {
   const { part, offset, limit } = getOptions(req.query);
 
   // 获取问政总数
@@ -172,6 +172,22 @@ router.get("/e-participation/:userID(\\d+)", adminAuthMiddleware, async (req, re
   try {
     const result = await getArticleByUserID(userID, req.query);
     return res.json(jsondata("0000", "获取成功", result));
+  } catch (error) {
+    return res.json(jsondata("1001", "获取失败", error));
+  }
+});
+
+// 获取问政文章详情
+router.get("/e-participation/detail/:id(\\d+)", async (req, res) => {
+  // 获取问政文章id
+  const { id } = req.params;
+  try {
+    const sql = "SELECT `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time` FROM `e_participation` WHERE `id`=? LIMIT 1";
+    const result = await querySql(sql, [id]);
+    if (result.length === 0) {
+      return res.json(jsondata("1002", "问政信息不存在。请检查id是否正确。", ""));
+    }
+    return res.json(jsondata("0000", "获取成功", result[0]));
   } catch (error) {
     return res.json(jsondata("1001", "获取失败", error));
   }

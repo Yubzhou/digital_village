@@ -79,9 +79,10 @@ CREATE TABLE `news`
 CREATE TABLE `feedbacks`
 (
     `id`           INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增键',
-    `user_id`      INT         NOT NULL COMMENT '用户id',
-    `username`     VARCHAR(25) NOT NULL COMMENT '用户名',
-    `message`      TEXT        NOT NULL COMMENT '留言内容',
+    `user_id`      INT          NOT NULL COMMENT '用户id',
+    `username`     VARCHAR(25)  NOT NULL COMMENT '用户名',
+    `title`        VARCHAR(255) NOT NULL COMMENT '标题',
+    `content`      TEXT         NOT NULL COMMENT '留言内容',
     `publish_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '发布时间'
 );
 

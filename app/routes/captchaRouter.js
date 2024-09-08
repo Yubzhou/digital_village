@@ -24,7 +24,7 @@ router.post("/captcha", async (req, res) => {
   }
 
   // 返回 验证码ID 和 验证码图片
-  res.json(jsondata("0000", "获取验证码成功", { captchaId, svg: data }));
+  return res.json(jsondata("0000", "获取验证码成功", { captchaId, svg: data }));
 });
 
 export default router;
