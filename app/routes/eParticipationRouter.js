@@ -141,7 +141,8 @@ async function getArticleByUserID(userID, options) {
         "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time`, `reply_time` FROM `e_participation` WHERE `user_id`=? ORDER BY `id` DESC LIMIT ?, ?";
       result = await querySql(sql, [userID, offset, limit]);
     } else {
-      const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time`, `reply_time` FROM `e_participation` WHERE `user_id`=? ORDER BY `id` DESC";
+      const sql =
+        "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time`, `reply_time` FROM `e_participation` WHERE `user_id`=? ORDER BY `id` DESC";
       result = await executeSql(sql, [userID]);
     }
     return {
@@ -193,20 +194,22 @@ router.get("/e-participation/detail/:id(\\d+)", async (req, res) => {
   }
 });
 
-// 获取未回复的问政信息，按最新发布时间排序，需要管理员权限
-router.get("/e-participation/unreply", adminAuthMiddleware, async (req, res) => {
+// 按status筛选问政信息，按最新发布时间排序，且status只能是0或1
+router.get("/e-participation/filter/:status(0|1)", async (req, res) => {
   const { part, offset, limit } = getOptions(req.query);
-
+  const { status } = req.params;
+  console.log(status);
+  
   // 获取总数
-  const total = await getTotal(" WHERE `status`=0");
+  const total = await getTotal(" WHERE `status`=" + status);
   try {
     let result;
     if (part) {
-      const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `publish_time` FROM `e_participation` WHERE `status`=0 ORDER BY `id` DESC LIMIT ?, ?";
-      result = await querySql(sql, [offset, limit]);
+      const sql = "SELECT * FROM `e_participation` WHERE `status`=? ORDER BY `id` DESC LIMIT ?, ?";
+      result = await querySql(sql, [status, offset, limit]);
     } else {
-      const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `publish_time` FROM `e_participation` WHERE `status`=0 ORDER BY `id` DESC";
-      result = await executeSql(sql);
+      const sql = "SELECT * FROM `e_participation` WHERE `status`=? ORDER BY `id` DESC";
+      result = await executeSql(sql, [status]);
     }
     result = {
       total,
