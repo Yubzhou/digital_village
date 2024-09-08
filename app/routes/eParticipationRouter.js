@@ -111,10 +111,10 @@ router.get("/e-participation/batch", async (req, res) => {
   try {
     let result;
     if (part) {
-      const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time` FROM `e_participation` ORDER BY `id` DESC LIMIT ?, ?";
+      const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time`, `reply_time` FROM `e_participation` ORDER BY `id` DESC LIMIT ?, ?";
       result = await querySql(sql, [offset, limit]);
     } else {
-      const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time` FROM `e_participation` ORDER BY `id` DESC";
+      const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time`, `reply_time` FROM `e_participation` ORDER BY `id` DESC";
       result = await executeSql(sql);
     }
 
@@ -138,10 +138,10 @@ async function getArticleByUserID(userID, options) {
     let result;
     if (part) {
       const sql =
-        "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time` FROM `e_participation` WHERE `user_id`=? ORDER BY `id` DESC LIMIT ?, ?";
+        "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time`, `reply_time` FROM `e_participation` WHERE `user_id`=? ORDER BY `id` DESC LIMIT ?, ?";
       result = await querySql(sql, [userID, offset, limit]);
     } else {
-      const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time` FROM `e_participation` WHERE `user_id`=? ORDER BY `id` DESC";
+      const sql = "SELECT `id`, `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time`, `reply_time` FROM `e_participation` WHERE `user_id`=? ORDER BY `id` DESC";
       result = await executeSql(sql, [userID]);
     }
     return {
@@ -182,7 +182,7 @@ router.get("/e-participation/detail/:id(\\d+)", async (req, res) => {
   // 获取问政文章id
   const { id } = req.params;
   try {
-    const sql = "SELECT `username`, `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time` FROM `e_participation` WHERE `id`=? LIMIT 1";
+    const sql = "SELECT `title`, `content`, `location`, `address`, `images`, `status`, `reply`, `publish_time`, `reply_time` FROM `e_participation` WHERE `id`=? LIMIT 1";
     const result = await querySql(sql, [id]);
     if (result.length === 0) {
       return res.json(jsondata("1002", "问政信息不存在。请检查id是否正确。", ""));
@@ -254,7 +254,7 @@ router.patch("/e-participation/reply", adminAuthMiddleware, async (req, res) => 
   // 获取问政文章id, 回复内容
   const { id, reply } = req.body;
   try {
-    const sql = "UPDATE `e_participation` SET `reply`=?, `status`=? WHERE `id`=? LIMIT 1";
+    const sql = "UPDATE `e_participation` SET `reply`=?, `status`=?, `reply_time`=CURRENT_TIMESTAMP() WHERE `id`=? LIMIT 1";
     const result = await executeSql(sql, [reply, 1, id]);
     if (result.affectedRows === 0) {
       return res.json(jsondata("1002", "回复失败，问政信息不存在。请检查id是否正确。", ""));

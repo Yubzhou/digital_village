@@ -100,6 +100,7 @@ CREATE TABLE `e_participation`
     `images`       TEXT         NOT NULL COMMENT '多张图片地址url（使用,分隔）',
     `status`       TINYINT  DEFAULT 0 COMMENT '文章状态：0为待回复，1为已回复',
     `reply`        TEXT COMMENT '回复内容',
+    `reply_time`   DATETIME COMMENT '回复时间',
     `publish_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '发布时间'
 );
 
