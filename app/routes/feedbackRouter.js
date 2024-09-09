@@ -64,8 +64,9 @@ router.get("/feedbacks", adminAuthMiddleware, async (req, res) => {
 
 // 发布新留言
 router.post("/feedbacks", async (req, res) => {
-  const { userID, username } = req.auth;
+  const { sub: userID, username } = req.auth;
   const { title, content } = req.body;
+
   const sql = "INSERT INTO `feedbacks` (`user_id`, `username`, `title`, `content`) VALUES (?,?,?,?)";
   try {
     const result = await executeSql(sql, [userID, username, title, content]);
