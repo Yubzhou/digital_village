@@ -104,3 +104,25 @@ CREATE TABLE `e_participation`
     `publish_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '发布时间'
 );
 
+
+# 投票表
+CREATE TABLE `vote_info`
+(
+    `id`               INT          NOT NULL AUTO_INCREMENT COMMENT '自增键',
+    `candidate_id`     INT          NOT NULL COMMENT '候选人id，只能确保在某场活动中的唯一性',
+    `candidate_name`   VARCHAR(255) NOT NULL COMMENT '候选人姓名',
+    `vote_activity_id` INT          NOT NULL COMMENT '投票活动id，表示是哪场活动',
+    `vote_count`       INT          NOT NULL DEFAULT 0 COMMENT '获得的投票数量',
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_candidate_activity` (`candidate_id`, `vote_activity_id`)
+);
+
+# 记录投票活动信息
+CREATE TABLE `vote_activities`
+(
+    `activity_id`   INT          NOT NULL AUTO_INCREMENT COMMENT '投票活动id',
+    `activity_name` VARCHAR(255) NOT NULL COMMENT '投票活动名字',
+    `description`   TEXT         NOT NULL COMMENT '投票活动的描述',
+    `is_ended`      BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '活动是否已经结束',
+    PRIMARY KEY (`activity_id`)
+)

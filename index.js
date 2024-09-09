@@ -21,6 +21,7 @@ import logoutRouter from "./app/routes/logoutRouter.js";
 import newsRouter from "./app/routes/newsRouter.js";
 import feedbackRouter from "./app/routes/feedbackRouter.js";
 import eParticipationRouter from "./app/routes/eParticipationRouter.js";
+import voteRouter from "./app/routes/voteRouter.js";
 
 // 导入自定义工具
 import jsondata from "./app/utils/jsondata.js";
@@ -81,6 +82,9 @@ app.use("/api", feedbackRouter);
 
 // 使用路由中间件，问政路由
 app.use("/api", eParticipationRouter);
+
+// 使用路由中间件，投票路由
+app.use("/api", voteRouter);
 
 // 处理 404 错误
 app.all("*", (req, res) => {
