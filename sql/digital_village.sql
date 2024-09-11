@@ -125,4 +125,4 @@ CREATE TABLE `vote_activities`
     `description`   TEXT         NOT NULL COMMENT '投票活动的描述',
     `is_ended`      BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '活动是否已经结束',
     PRIMARY KEY (`activity_id`)
-)
+);

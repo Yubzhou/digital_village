@@ -55,8 +55,6 @@ router.post("/refresh", async (req, res) => {
 // 注销
 router.post("/logout", async (req, res) => {
   // 从请求头中获取用户id
-  console.log(req.auth);
-
   const { sub: userID } = req.auth;
   try {
     await executeSql("DELETE FROM `refresh_tokens` WHERE `user_id`=? LIMIT 1", [userID]);

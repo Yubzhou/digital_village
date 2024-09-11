@@ -7,6 +7,8 @@ import https from "https";
 
 // 导入mkcert配置，导入https证书
 import mkcertOptions from "./app/config/mkcertConfig.js";
+// 导入数据库连接池
+import pool from "./app/config/dbConfig.js";
 
 // 导入中间件
 // 导入express-jwt配置中间件，用于验证token
@@ -21,7 +23,7 @@ import logoutRouter from "./app/routes/logoutRouter.js";
 import newsRouter from "./app/routes/newsRouter.js";
 import feedbackRouter from "./app/routes/feedbackRouter.js";
 import eParticipationRouter from "./app/routes/eParticipationRouter.js";
-import voteRouter from "./app/routes/voteRouter.js";
+import { router as voteRouter, saveCacheOnExit } from "./app/routes/voteRouter.js";
 
 // 导入自定义工具
 import jsondata from "./app/utils/jsondata.js";
@@ -33,7 +35,7 @@ const corsOptions = {
   // 如果希望请求包含 cookies 或其他认证信息，这要求服务器响应中 Access-Control-Allow-Origin 必须指定一个确切的源，而不是 *。
   origin: ["https://127.0.0.1:5500", "https://localhost:5500", "https://localhost:5173", "https://127.0.0.1:5173"], // 允许的域名，可以用数组指定多个
   // credentials: true, // 设置为 true，允许发送 cookie
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"], // 允许的HTTPS请求类型
+  methods: ["GET", "POST", "PUT", "DELETE", "DELETE", "OPTIONS"], // 允许的HTTPS请求类型
   allowedHeaders: ["Content-Type", "Authorization"], // 允许的请求头
 };
 // 允许跨域请求
@@ -97,11 +99,33 @@ app.use((err, req, res, next) => {
   if (err.name === "UnauthorizedError") {
     res.status(401).json(jsondata(err.status, err.inner.message, err));
   } else {
-    res.status(500).json(jsondata('5000', "服务器内部错误", err));
+    res.status(500).json(jsondata("5000", "服务器内部错误", err));
   }
 });
 
 // 创建HTTPS服务器
-https.createServer(mkcertOptions, app).listen(443, () => {
-  console.log('HTTPS server running on port 443, https://localhost:443, https://127.0.0.1:443');
+const server = https.createServer(mkcertOptions, app).listen(443, () => {
+  console.log("HTTPS server running on port 443, https://localhost:443, https://127.0.0.1:443");
 });
+
+async function exitHandler() {
+  try {
+    // 保存投票缓存到数据库
+    await saveCacheOnExit();
+    // 关闭数据库连接池
+    await pool.end();
+  } catch (err) {
+    console.log(err);
+  }
+  console.log("Server is shutting down...");
+
+  // 等待一段时间以确保所有清理工作都已经完成
+  await new Promise(resolve => setTimeout(resolve, 300));
+
+  // 退出 Node.js 服务
+  process.exit(0); // 0 表示正常退出
+}
+
+// 当服务器关闭时，执行一些清理操作
+process.on("SIGTERM", exitHandler);
+process.on("SIGINT", exitHandler);

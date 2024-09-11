@@ -6,24 +6,46 @@ import jsondata from "../utils/jsondata.js";
 
 const router = express.Router();
 
+// 从数据库读取投票缓存
+async function getVoteCache() {
+  // 获取投票活动未结束的投票记录
+  const sql = "SELECT * FROM `vote_info` WHERE `vote_activity_id` IN (SELECT `activity_id` FROM `vote_activities` WHERE `is_ended`=0);";
+  try {
+    const result = await executeSql(sql);
+    // 解析结果，更新缓存
+    const voteCache = {};
+    result.forEach((row) => {
+      voteCache[row.id] = { voteCount: row.vote_count, activityId: row.vote_activity_id, isChanged: false };
+    });
+    return voteCache;
+  } catch (error) {
+    // console.error(error);
+    throw error;
+  }
+}
+
 // 投票缓存
-let voteCache = {};
+let voteCache;
 // 缓存是否发生变化
 let isChanged = false;
+
+// 服务启动时读取投票缓存
+voteCache = await getVoteCache();
+console.log("Vote cache:", voteCache);
 
 /*
 voteCache基本结构
 voteCache = {
-  id1: {voteCount, isChanged},
-  id2: {voteCount, isChanged},
-  id3: {voteCount, isChanged},
-  id4: {voteCount, isChanged},
-  id5: {voteCount, isChanged},
+  id1: {voteCount, activityId, isChanged},
+  id2: {voteCount, activityId, isChanged},
+  id3: {voteCount, activityId, isChanged},
+  id4: {voteCount, activityId, isChanged},
+  id5: {voteCount, activityId, isChanged},
   ...
 }
 */
 
-// 投票缓存数据更新到数据库
+// 将投票缓存数据更新到数据库
 async function updateDB() {
   const sql = "UPDATE `vote_info` SET `vote_count`=? WHERE `id`=? LIMIT 1";
   try {
@@ -41,6 +63,7 @@ async function updateDB() {
     }
     // 释放连接
     connection.release();
+    console.log("Vote cache updated in database.");
     return true;
   } catch (error) {
     console.error(error);
@@ -53,9 +76,9 @@ setInterval(() => isChanged && updateDB() && (isChanged = false), 10 * 60 * 1000
 
 // 更新投票缓存
 function updateVoteCache(id) {
-  // 确保每个投票记录都有一个对象来存储投票信息
+  // 确保id正确（即为正确的投票记录）
   if (!voteCache.hasOwnProperty(id)) {
-    voteCache[id] = { voteCount: 0, isChanged: false };
+    throw new Error(`Invalid vote id: ${id}, please check if the id is correct`);
   }
 
   // 获取投票记录id对应的投票信息，并更新候选人投票数
@@ -67,6 +90,37 @@ function updateVoteCache(id) {
   isChanged = true;
 }
 
+// 获取全部投票活动列表
+router.get("/vote/activities", async (req, res) => {
+  try {
+    const sql = "SELECT * FROM `vote_activities`";
+    const result = await executeSql(sql);
+    return res.json(jsondata("0000", "获取投票活动列表成功", result));
+  } catch (error) {
+    return res.json(jsondata("1001", "获取投票活动列表失败", error));
+  }
+});
+
+// 获取指定投票活动的投票数据
+router.get("/vote/:activityId", (req, res) => {
+  let activityId = req.params.activityId;
+
+  // 验证activityId是否合法，即是否为正整数
+  const isValidActivityId = /^[1-9]\d*$/;
+  if (!isValidActivityId.test(activityId)) {
+    return res.json(jsondata("1001", "投票活动id不合法", "activityId参数必须为正整数（大于0）"));
+  }
+  // 转换为整数
+  activityId = parseInt(activityId);
+  // 获取投票数据
+  const voteData = Object.keys(voteCache)
+    .filter((id) => voteCache[id].activityId === activityId)
+    .map((id) => ({ id, voteCount: voteCache[id].voteCount }));
+  console.log(voteData);
+  // 成功
+  return res.json(jsondata("0000", "获取投票数据成功", { voteData }));
+});
+
 // 处理投票逻辑
 router.post("/vote", (req, res) => {
   // 获取唯一id
@@ -74,12 +128,17 @@ router.post("/vote", (req, res) => {
   // 验证id是否合法
   const isValidId = /^[1-9]\d*$/;
   if (!isValidId.test(id)) {
-    return res.json(jsondata("1001", "投票id不合法", "id参数必须为正整数"));
+    return res.json(jsondata("1001", "投票id不合法", "id参数必须为正整数（大于0）"));
   }
-  // 更新投票缓存
-  updateVoteCache(id);
-  // 成功
-  return res.json(jsondata("0000", "投票成功", ""));
+  try {
+    // 更新投票缓存
+    updateVoteCache(id);
+    console.log("Vote cache updated:", voteCache);
+    // 成功
+    return res.json(jsondata("0000", "投票成功", { id, voteCount: voteCache[id].voteCount }));
+  } catch (error) {
+    return res.json(jsondata("1002", "投票失败", error));
+  }
 });
 
 // 发布投票活动
@@ -98,7 +157,6 @@ async function postVoteActivity(activityName, description) {
 router.post("/vote/activity", async (req, res) => {
   // 活动名称、描述、候选人列表
   const { activityName, description, candidates } = req.body;
-  // console.log(req.body);
 
   try {
     // 发布投票活动
@@ -116,4 +174,14 @@ router.post("/vote/activity", async (req, res) => {
   }
 });
 
-export default router;
+// 在服务关闭时保存缓存数据
+async function saveCacheOnExit() {
+  if (isChanged) {
+    console.log("Saving vote cache before exit...");
+    await updateDB();
+    isChanged = false; // 缓存已保存，清除标志
+    console.log("Vote cache saved.");
+  }
+}
+
+export { router, saveCacheOnExit };
