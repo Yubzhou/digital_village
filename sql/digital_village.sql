@@ -123,6 +123,8 @@ CREATE TABLE `vote_activities`
     `activity_id`   INT          NOT NULL AUTO_INCREMENT COMMENT '投票活动id',
     `activity_name` VARCHAR(255) NOT NULL COMMENT '投票活动名字',
     `description`   TEXT         NOT NULL COMMENT '投票活动的描述',
+    `start_time`    DATETIME     NOT NULL COMMENT '开始时间',
+    `end_time`      DATETIME     NOT NULL COMMENT '结束时间',
     `is_ended`      BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '活动是否已经结束',
     PRIMARY KEY (`activity_id`)
 );

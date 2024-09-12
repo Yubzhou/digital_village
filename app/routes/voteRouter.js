@@ -142,10 +142,10 @@ router.post("/vote", (req, res) => {
 });
 
 // 发布投票活动
-async function postVoteActivity(activityName, description) {
+async function postVoteActivity(params) {
   try {
-    const sql = "INSERT INTO `vote_activities` (`activity_name`, `description`) VALUES (?,?)";
-    const result = await executeSql(sql, [activityName, description]);
+    const sql = "INSERT INTO `vote_activities` (`activity_name`, `description`, `start_time`, `end_time`) VALUES (?,?,?,?)";
+    const result = await executeSql(sql, params);
     return result.insertId;
   } catch (error) {
     // console.error(error);
@@ -156,11 +156,12 @@ async function postVoteActivity(activityName, description) {
 // 发布投票活动，需要输入活动名称和描述，以及候选人列表
 router.post("/vote/activity", async (req, res) => {
   // 活动名称、描述、候选人列表
-  const { activityName, description, candidates } = req.body;
+  const { activityName, description, startTime, endTime, candidates } = req.body;
 
   try {
     // 发布投票活动
-    const activityId = await postVoteActivity(activityName, description);
+    const activityId = await postVoteActivity([activityName, description, startTime, endTime]);
+    return res.json(jsondata("0000", "发布成功", { activityId }));
     // 获取批量插入的候选人列表
     const inserts = candidates.map((value, index) => [index + 1, value, activityId]);
     // console.log(inserts);
