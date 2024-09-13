@@ -1,10 +1,10 @@
-CREATE DATABASE `digital_village`;
+CREATE DATABASE IF NOT EXISTS `digital_village`;
 
 USE `digital_village`;
 
 
 # 用户表
-CREATE TABLE `users`
+CREATE TABLE IF NOT EXISTS `users`
 (
     `user_id`         INT AUTO_INCREMENT PRIMARY KEY COMMENT '用户id',
     `username`        VARCHAR(25) UNIQUE COMMENT '用户名',
@@ -18,7 +18,7 @@ CREATE TABLE `users`
 
 
 # 用户详情表
-CREATE TABLE `user_details`
+CREATE TABLE IF NOT EXISTS `user_details`
 (
     `user_id`     INT PRIMARY KEY COMMENT '用户id',
     `nickname`    VARCHAR(50)  NOT NULL COMMENT '昵称',
@@ -46,7 +46,7 @@ DELIMITER ;
 
 
 # refresh_tokens表结构
-CREATE TABLE `refresh_tokens`
+CREATE TABLE IF NOT EXISTS `refresh_tokens`
 (
     `id`      INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增键id',
     `user_id` INT UNIQUE COMMENT '用户id',
@@ -57,7 +57,7 @@ CREATE TABLE `refresh_tokens`
 
 
 # 图片验证码
-CREATE TABLE `captcha`
+CREATE TABLE IF NOT EXISTS `captcha`
 (
     `captcha_id`   INT AUTO_INCREMENT PRIMARY KEY COMMENT '会话ID',
     `captcha_code` CHAR(4) NOT NULL COMMENT '4位验证码'
@@ -65,7 +65,7 @@ CREATE TABLE `captcha`
 
 
 # 新闻
-CREATE TABLE `news`
+CREATE TABLE IF NOT EXISTS `news`
 (
     `news_id`       INT AUTO_INCREMENT PRIMARY KEY COMMENT '新闻ID',
     `news_title`    VARCHAR(255) NOT NULL COMMENT '新闻标题',
@@ -76,7 +76,7 @@ CREATE TABLE `news`
 
 
 # 留言反馈
-CREATE TABLE `feedbacks`
+CREATE TABLE IF NOT EXISTS `feedbacks`
 (
     `id`           INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增键',
     `user_id`      INT          NOT NULL COMMENT '用户id',
@@ -88,7 +88,7 @@ CREATE TABLE `feedbacks`
 
 
 # 问政
-CREATE TABLE `e_participation`
+CREATE TABLE IF NOT EXISTS `e_participation`
 (
     `id`           INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增键',
     `user_id`      INT          NOT NULL COMMENT '用户id',
@@ -106,7 +106,7 @@ CREATE TABLE `e_participation`
 
 
 # 投票表
-CREATE TABLE `vote_info`
+CREATE TABLE IF NOT EXISTS `vote_info`
 (
     `id`               INT          NOT NULL AUTO_INCREMENT COMMENT '自增键',
     `candidate_id`     INT          NOT NULL COMMENT '候选人id，只能确保在某场活动中的唯一性',
@@ -118,7 +118,7 @@ CREATE TABLE `vote_info`
 );
 
 # 记录投票活动信息
-CREATE TABLE `vote_activities`
+CREATE TABLE IF NOT EXISTS `vote_activities`
 (
     `activity_id`   INT          NOT NULL AUTO_INCREMENT COMMENT '投票活动id',
     `activity_name` VARCHAR(255) NOT NULL COMMENT '投票活动名字',
@@ -127,4 +127,13 @@ CREATE TABLE `vote_activities`
     `end_time`      DATETIME     NOT NULL COMMENT '结束时间',
     `is_ended`      BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '活动是否已经结束',
     PRIMARY KEY (`activity_id`)
+);
+
+# 记录用户投票活动的表
+CREATE TABLE IF NOT EXISTS `user_vote_records`
+(
+    `record_id`        INT AUTO_INCREMENT PRIMARY KEY,
+    `user_id`          INT NOT NULL COMMENT '用户id',
+    `vote_activity_id` INT NOT NULL COMMENT '投票活动id',
+    UNIQUE KEY `unique_user_vote` (`user_id`, `vote_activity_id`)
 );

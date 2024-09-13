@@ -161,13 +161,14 @@ router.post("/vote/activity", async (req, res) => {
   try {
     // 发布投票活动
     const activityId = await postVoteActivity([activityName, description, startTime, endTime]);
-    return res.json(jsondata("0000", "发布成功", { activityId }));
     // 获取批量插入的候选人列表
     const inserts = candidates.map((value, index) => [index + 1, value, activityId]);
     // console.log(inserts);
     // 候选人列表插入数据库
     const sql = "INSERT INTO `vote_info` (`candidate_id`, `candidate_name`, `vote_activity_id`) VALUES ?";
     const result = await insertMany(sql, [inserts]);
+    // 获取第一个插入的id
+    const insertId = result.insertId;
     // 发布成功
     return res.json(jsondata("0000", "发布成功", { activityId, result }));
   } catch (error) {

@@ -5,6 +5,9 @@ import path from "path";
 import { fileURLToPath } from "url";
 import https from "https";
 
+// 执行目录函数
+import "./app/utils/createDirectory.js";
+
 // 导入mkcert配置，导入https证书
 import mkcertOptions from "./app/config/mkcertConfig.js";
 // 导入数据库连接池
@@ -35,7 +38,7 @@ const corsOptions = {
   // 如果希望请求包含 cookies 或其他认证信息，这要求服务器响应中 Access-Control-Allow-Origin 必须指定一个确切的源，而不是 *。
   origin: ["https://127.0.0.1:5500", "https://localhost:5500", "https://localhost:5173", "https://127.0.0.1:5173"], // 允许的域名，可以用数组指定多个
   // credentials: true, // 设置为 true，允许发送 cookie
-  methods: ["GET", "POST", "PUT", "DELETE", "DELETE", "OPTIONS"], // 允许的HTTPS请求类型
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], // 允许的HTTPS请求类型
   allowedHeaders: ["Content-Type", "Authorization"], // 允许的请求头
 };
 // 允许跨域请求
@@ -120,7 +123,7 @@ async function exitHandler() {
   console.log("Server is shutting down...");
 
   // 等待一段时间以确保所有清理工作都已经完成
-  await new Promise(resolve => setTimeout(resolve, 300));
+  await new Promise((resolve) => setTimeout(resolve, 300));
 
   // 退出 Node.js 服务
   process.exit(0); // 0 表示正常退出
