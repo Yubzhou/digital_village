@@ -5,7 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import https from "https";
 
-// 执行目录函数
+// 执行创建目录函数
 import "./app/utils/createDirectory.js";
 
 // 导入mkcert配置，导入https证书
