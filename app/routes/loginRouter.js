@@ -49,20 +49,13 @@ async function generateToken(user_id, username, isAdmin) {
   payload.exp = now + jwtConfig.REFRESH_TOKEN_EXPIRATION;
   const refreshToken = jwt.sign(payload, jwtConfig.REFRESH_SECRET_KEY);
 
-  let sql;
   // 保存refreshToken到数据库
   try {
-    sql = "INSERT INTO `refresh_tokens` (`user_id`, `iat`, `exp`) VALUES (?, ?, ?)";
-    await executeSql(sql, [user_id, now, payload.exp]);
+    const sql = "UPDATE `refresh_tokens` SET `iat`=?, `exp`=? WHERE `user_id`=? LIMIT 1";
+    await executeSql(sql, [now, payload.exp, user_id]);
   } catch (error) {
     // console.log(error);
-    // 如果refreshToken已经存在，则更新refreshToken的过期时间
-    if (error.code === "ER_DUP_ENTRY") {
-      sql = "UPDATE `refresh_tokens` SET `iat`=?, `exp`=? WHERE `user_id`=? LIMIT 1";
-      await executeSql(sql, [now, payload.exp, user_id]);
-    } else {
-      throw error;
-    }
+    throw error;
   }
   // 返回token
   return { accessToken, refreshToken };
@@ -90,9 +83,9 @@ router.post("/login", async (req, res) => {
     // 生成token
     const BearerTokens = await generateToken(user.user_id, user.username, user.is_admin);
     // 登录成功
-    return res.json(jsondata("0000", "登录成功", { userID: user.user_id, username: user.username, isAdmin: user.is_admin, tokens: BearerTokens }));
+    return res.json(jsondata("0000", "登录成功", { userID: user.user_id, username: user.username, isAdmin: user.is_admin, profile: user.profile, tokens: BearerTokens }));
   } catch (error) {
-    return res.status(500).json(jsondata("1001", "登录失败", error));
+    return res.status(500).json(jsondata("1001", `登录失败: ${error.message}`, error));
   }
 });
 

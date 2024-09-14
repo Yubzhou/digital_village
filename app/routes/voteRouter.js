@@ -41,9 +41,15 @@ let voteCache;
 // 缓存是否发生变化
 let isChanged = false;
 
-// 服务启动时读取投票缓存
-voteCache = await getVoteCache();
-console.log("Vote cache:", voteCache);
+// 服务启动时读取投票缓存，异步操作
+(async () => {
+  try {
+    voteCache = await getVoteCache();
+    console.log("Vote cache:", voteCache);
+  } catch (error) {
+    console.error("Failed to initialize vote cache:", error);
+  }
+})();
 
 /*
 voteCache基本结构
@@ -78,10 +84,9 @@ async function updateDBAll() {
     // 更新缓存标志
     isChanged = false;
     console.log("Vote cache updated in database.");
-    return true;
   } catch (error) {
-    console.error(error);
-    return false;
+    // console.error(error);
+    throw error;
   }
 }
 
@@ -127,15 +132,21 @@ async function updateDBPartForEnd(activityId) {
     // 更新缓存标志
     // isChanged = false; // 部分更新不需要更新缓存标志
     console.log("Vote cache partly updated in database.");
-    return true;
   } catch (error) {
-    console.error(error);
-    return false;
+    throw error;
   }
 }
 
 // 定时任务，每隔10分钟判断一次，如果缓存发生变化才更新数据库
-setInterval(async () => isChanged && (await updateDBAll()), 10 * 60 * 1000);
+setInterval(async () => {
+  if (isChanged) {
+    try {
+      await updateDBAll();
+    } catch (error) {
+      console.error(error);
+    }
+  }
+}, 10 * 60 * 1000);
 
 // 更新投票缓存
 function updateVoteCache(id) {
@@ -159,7 +170,7 @@ router.get("/vote/activities", async (req, res) => {
     const result = await getVoteActivities();
     return res.json(jsondata("0000", "获取投票活动列表成功", result));
   } catch (error) {
-    return res.json(jsondata("1001", "获取投票活动列表失败", error));
+    return res.json(jsondata("1001", `获取投票活动列表失败: ${error.message}`, error));
   }
 });
 
@@ -203,7 +214,7 @@ router.get("/vote/user-vote-record/:activityId", async (req, res) => {
     const isVoted = await getUserVoteRecord(userID, activityId);
     return res.json(jsondata("0000", "查询投票状态成功", { isVoted }));
   } catch (error) {
-    return res.json(jsondata("1002", "查询投票状态失败", error));
+    return res.json(jsondata("1002", `查询投票状态失败: ${error.message}`, error));
   }
 });
 
@@ -223,8 +234,9 @@ router.get("/vote/:activityId", (req, res) => {
     .filter((id) => voteCache[id].activityId === activityId)
     .map((id) => ({ id, voteCount: voteCache[id].voteCount }));
   // console.log(voteData);
+  const totalCount = voteData.reduce((acc, cur) => acc + cur.voteCount, 0);
   // 成功
-  return res.json(jsondata("0000", "获取投票数据成功", { voteData }));
+  return res.json(jsondata("0000", "获取投票数据成功", { totalCount, voteData }));
 });
 
 // 处理投票逻辑
@@ -239,15 +251,18 @@ router.post("/vote", async (req, res) => {
     return res.json(jsondata("1001", "投票id不合法", "id参数必须为正整数（大于0）"));
   }
   try {
-    // 更新投票缓存
-    updateVoteCache(id);
     // 插入用户的投票记录
     await insertUserVoteRecord(userID, voteCache[id].activityId);
+    // 更新投票缓存
+    updateVoteCache(id);
     console.log("Vote cache updated:", voteCache);
     // 成功
     return res.json(jsondata("0000", "投票成功", { id, voteCount: voteCache[id].voteCount }));
   } catch (error) {
-    return res.json(jsondata("1002", "投票失败", error));
+    if (error.code === "ER_DUP_ENTRY") {
+      return res.json(jsondata("1002", "投票失败", "请勿重复投票"));
+    }
+    return res.json(jsondata("1003", `投票失败: ${error.message}`, error));
   }
 });
 
@@ -288,7 +303,7 @@ router.post("/vote/activity", async (req, res) => {
     // 发布成功
     return res.json(jsondata("0000", "发布成功", { activityId, result }));
   } catch (error) {
-    return res.json(jsondata("1002", "发布投票活动失败", error));
+    return res.json(jsondata("1002", `发布投票活动失败: ${error.message}`, error));
   }
 });
 
@@ -308,10 +323,9 @@ router.post("/vote/activity/end", async (req, res) => {
     }
     // 成功
     return res.json(jsondata("0000", "活动结束成功", ""));
-    
   } catch (error) {
     // console.error(error);
-    return res.json(jsondata("1002", "活动结束失败", error));
+    return res.json(jsondata("1002", `活动结束失败: ${error.message}`, error));
   }
 });
 
@@ -319,7 +333,11 @@ router.post("/vote/activity/end", async (req, res) => {
 async function saveCacheOnExit() {
   if (isChanged) {
     console.log("Saving vote cache before exit...");
-    await updateDBAll();
+    try {
+      await updateDBAll();
+    } catch (error) {
+      console.error(error);
+    }
     console.log("Vote cache saved.");
   }
 }

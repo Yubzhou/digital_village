@@ -45,7 +45,7 @@ router.post("/refresh", async (req, res) => {
     if (error.name === "TokenExpiredError") {
       return res.status(500).json(jsondata("1001", "TokenExpiredError: 登录已过期, 请重新登录", error));
     } else if (error.name === "JsonWebTokenError") {
-      return res.status(500).json(jsondata("1002", "JsonWebTokenError", error));
+      return res.status(500).json(jsondata("1002", `JsonWebTokenError: ${error.message}`, error));
     } else if (error.name === "NotBeforeError") {
       return res.status(500).json(jsondata("1003", "NotBeforeError: jwt未激活", error));
     }
@@ -61,7 +61,7 @@ router.post("/logout", async (req, res) => {
     return res.json(jsondata("0000", "注销成功", ""));
   } catch (error) {
     // console.error(error);
-    return res.status(500).json(jsondata("1001", "注销失败", error));
+    return res.status(500).json(jsondata("1001", `注销失败: ${error.message}`, error));
   }
 });
 

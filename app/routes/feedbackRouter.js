@@ -58,7 +58,7 @@ router.get("/feedbacks", adminAuthMiddleware, async (req, res) => {
     };
     return res.json(jsondata("0000", "获取留言成功", result));
   } catch (error) {
-    return res.json(jsondata("0001", "获取留言失败", error));
+    return res.json(jsondata("0001", `获取留言失败: ${error.message}`, error));
   }
 });
 
@@ -72,7 +72,7 @@ router.post("/feedbacks", async (req, res) => {
     const result = await executeSql(sql, [userID, username, title, content]);
     return res.json(jsondata("0000", "发布留言成功", result));
   } catch (error) {
-    return res.json(jsondata("0001", "发布留言失败", error));
+    return res.json(jsondata("0001", `发布留言失败: ${error.message}`, error));
   }
 });
 

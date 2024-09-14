@@ -1,7 +1,6 @@
 import express from "express";
 const router = express.Router();
 
-import pool from "../config/dbConfig.js";
 import jsondata from "../utils/jsondata.js";
 import { executeSql, querySql } from "../utils/dbTools.js";
 
@@ -16,7 +15,7 @@ const TABLE_NAME = "`user_test`";
 // 获取用户信息
 async function getUserById(id) {
   const sql = `SELECT * FROM ${TABLE_NAME} WHERE \`id\`=?`;
-  const [result] = await pool.execute(sql, [id]);
+  const result = await executeSql(sql, [id]);
   return result;
 }
 
@@ -27,7 +26,7 @@ router.get("/users", async (req, res) => {
     const result = await executeSql(sql);
     return res.json(jsondata(SUCCESS_MESSAGE, "查询成功", result));
   } catch (error) {
-    return res.status(500).json(jsondata(SERVER_ERROR, "服务器错误", error.message));
+    return res.status(500).json(jsondata(SERVER_ERROR, `服务器错误: ${error.message}`, error));
   }
 });
 
@@ -39,7 +38,7 @@ router.get("/users/:id(\\d+)", async (req, res) => {
     const result = await executeSql(sql, [id]);
     return res.json(jsondata(SUCCESS_MESSAGE, "查询成功", result));
   } catch (error) {
-    return res.status(500).json(jsondata(SERVER_ERROR, "服务器错误", error.message));
+    return res.status(500).json(jsondata(SERVER_ERROR, `服务器错误: ${error.message}`, error));
   }
 });
 
@@ -52,7 +51,7 @@ router.post("/users", async (req, res) => {
     const user = await getUserById(result.insertId);
     return res.json(jsondata(SUCCESS_MESSAGE, "添加成功", user));
   } catch (error) {
-    return res.status(500).json(jsondata(SERVER_ERROR, "服务器错误", error.message));
+    return res.status(500).json(jsondata(SERVER_ERROR, `服务器错误: {error.message}`, error));
   }
 });
 
@@ -65,7 +64,7 @@ router.put("/users/:id(\\d+)", async (req, res) => {
     const user = await getUserById(id);
     return res.json(jsondata(SUCCESS_MESSAGE, "更新成功", user));
   } catch (error) {
-    return res.status(500).json(jsondata(SERVER_ERROR, "服务器错误", error.message));
+    return res.status(500).json(jsondata(SERVER_ERROR, `服务器错误: ${error.message}`, error));
   }
 });
 
@@ -80,7 +79,7 @@ router.patch("/users/:id(\\d+)", async (req, res) => {
     const user = await getUserById(id);
     return res.json(jsondata(SUCCESS_MESSAGE, "更新成功", user));
   } catch (error) {
-    return res.status(500).json(jsondata(SERVER_ERROR, "服务器错误", error.message));
+    return res.status(500).json(jsondata(SERVER_ERROR, `服务器错误: ${error.message}`, error));
   }
 });
 
@@ -92,7 +91,7 @@ router.delete("/users/:id(\\d+)", async (req, res) => {
     await executeSql(sql, [id]);
     return res.json(jsondata(SUCCESS_MESSAGE, "删除成功", null));
   } catch (error) {
-    return res.status(500).json(jsondata(SERVER_ERROR, "服务器错误", error.message));
+    return res.status(500).json(jsondata(SERVER_ERROR, `服务器错误: ${error.message}`, error));
   }
 });
 

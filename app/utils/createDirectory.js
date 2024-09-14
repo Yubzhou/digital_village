@@ -19,5 +19,9 @@ function createDirectory(dir) {
 }
 
 // 定义要创建的目录路径
+// 问政图片上传目录
 let dirPath = './app/public/uploads/e-participation';
+createDirectory(dirPath);
+// 用户头像上传目录
+dirPath = './app/public/uploads/profile';
 createDirectory(dirPath);

@@ -53,12 +53,11 @@ async function saveInfoToMySQL(req, res, params) {
 }
 
 // post提交多个问政信息, array 表示接受多个文件，input name="pic"
-router.post("/e-participation/post", upload.array("pic", 9), async (req, res) => {
-  if (!req.auth) {
-    return res.json(jsondata("1002", "请先登录", ""));
-  }
+router.post("/e-participation/post", upload.array("pic", 9), async (req, res) => {  
+  // 获取当前用户id
   const { sub: userID, username } = req.auth;
   const { title, content, location, address } = req.body;
+  // 如果未上传图片，则req.files为空数组
   const images = req.files.map((file) => "/public/uploads/e-participation/" + file.filename).join(",");
   // console.log(req.body);
   // console.log(req.files);
@@ -68,7 +67,7 @@ router.post("/e-participation/post", upload.array("pic", 9), async (req, res) =>
     return res.json(jsondata("0000", "提交成功", result));
   } catch (error) {
     // console.log(error);
-    return res.json(jsondata("1001", "提交失败", error));
+    return res.json(jsondata("1001", `提交失败: ${error.message}`, error));
   }
 });
 
@@ -124,7 +123,7 @@ router.get("/e-participation/batch", async (req, res) => {
     };
     return res.json(jsondata("0000", "获取成功", result));
   } catch (error) {
-    return res.json(jsondata("1001", "获取失败", error));
+    return res.json(jsondata("1001", `获取失败: ${error.message}`, error));
   }
 });
 
@@ -162,7 +161,7 @@ router.get("/e-participation/self", async (req, res) => {
     const result = await getArticleByUserID(userID, req.query);
     return res.json(jsondata("0000", "获取成功", result));
   } catch (error) {
-    return res.json(jsondata("1001", "获取失败", error));
+    return res.json(jsondata("1001", `获取失败: ${error.message}`, error));
   }
 });
 
@@ -174,7 +173,7 @@ router.get("/e-participation/:userID(\\d+)", adminAuthMiddleware, async (req, re
     const result = await getArticleByUserID(userID, req.query);
     return res.json(jsondata("0000", "获取成功", result));
   } catch (error) {
-    return res.json(jsondata("1001", "获取失败", error));
+    return res.json(jsondata("1001", `获取失败: ${error.message}`, error));
   }
 });
 
@@ -190,7 +189,7 @@ router.get("/e-participation/detail/:id(\\d+)", async (req, res) => {
     }
     return res.json(jsondata("0000", "获取成功", result[0]));
   } catch (error) {
-    return res.json(jsondata("1001", "获取失败", error));
+    return res.json(jsondata("1001", `获取失败: ${error.message}`, error));
   }
 });
 
@@ -217,7 +216,7 @@ router.get("/e-participation/filter/:status(0|1)", async (req, res) => {
     };
     return res.json(jsondata("0000", "获取成功", result));
   } catch (error) {
-    return res.json(jsondata("1001", "获取失败", error));
+    return res.json(jsondata("1001", `获取失败: ${error.message}`, error));
   }
 });
 
@@ -246,7 +245,7 @@ router.delete("/e-participation/delete/:id(\\d+)", async (req, res) => {
     }
     return res.json(jsondata("0000", "删除成功", ""));
   } catch (error) {
-    return res.json(jsondata("1001", "删除失败", error));
+    return res.json(jsondata("1001", `删除失败: ${error.message}`, error));
   }
 });
 
@@ -264,7 +263,7 @@ router.patch("/e-participation/reply", adminAuthMiddleware, async (req, res) => 
     }
     return res.json(jsondata("0000", "回复成功", ""));
   } catch (error) {
-    return res.json(jsondata("1001", "回复失败", error));
+    return res.json(jsondata("1001", `回复失败: ${error.message}`, error));
   }
 });
 

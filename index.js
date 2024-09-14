@@ -27,6 +27,7 @@ import newsRouter from "./app/routes/newsRouter.js";
 import feedbackRouter from "./app/routes/feedbackRouter.js";
 import eParticipationRouter from "./app/routes/eParticipationRouter.js";
 import { router as voteRouter, saveCacheOnExit } from "./app/routes/voteRouter.js";
+import userSettingsRouter from "./app/routes/userSettingsRouter.js";
 
 // 导入自定义工具
 import jsondata from "./app/utils/jsondata.js";
@@ -91,6 +92,9 @@ app.use("/api", eParticipationRouter);
 // 使用路由中间件，投票路由
 app.use("/api", voteRouter);
 
+// 使用路由中间件，用户个人中心路由
+app.use("/api", userSettingsRouter);
+
 // 处理 404 错误
 app.all("*", (req, res) => {
   res.status(404).send("<h1>404 Not Found</h1>");
@@ -98,11 +102,11 @@ app.all("*", (req, res) => {
 
 // 处理报错
 app.use((err, req, res, next) => {
-  // console.log(err);
+  console.log(err);
   if (err.name === "UnauthorizedError") {
     res.status(401).json(jsondata(err.status, err.inner.message, err));
   } else {
-    res.status(500).json(jsondata("5000", "服务器内部错误", err));
+    res.status(500).json(jsondata("5000", `服务器内部错误: ${err.message}`, err));
   }
 });
 
@@ -117,6 +121,7 @@ async function exitHandler() {
     await saveCacheOnExit();
     // 关闭数据库连接池
     await pool.end();
+    console.log("Database connection pool closed.");
   } catch (err) {
     console.log(err);
   }

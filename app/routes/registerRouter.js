@@ -42,16 +42,32 @@ async function checkData(req, res, next) {
 // 清除验证码记录
 async function clearCaptcha(captchaId) {
   if (!captchaId) return;
+  try {
+    // 删除数据库中验证码记录
+    const sql = "DELETE FROM `captcha` WHERE `captcha_id`=?";
+    await executeSql(sql, [captchaId]);
+  } catch (error) {
+    console.log(error);
+    // throw error;
+  }
+}
 
-  // 删除数据库中验证码记录
-  const sql = "DELETE FROM `captcha` WHERE `captcha_id`=?";
-  await executeSql(sql, [captchaId]);
+// 插入refresh_token
+async function insertRefreshToken(userID) {
+  if (!userID) return;
+  try {
+    // 插入空的refresh_token记录，当用户登录成功后，会更新refresh_token
+    const sql = "INSERT INTO `refresh_tokens` (`user_id`) VALUES (?)";
+    await executeSql(sql, [userID]);
+  } catch (error) {
+    // console.log(error);
+    throw error;
+  }
 }
 
 // 插入数据库
 async function insertUser(req, res) {
   const { username, password, phone, captchaId } = req.body;
-
   // 哈希密码，同步方法
   const hashedPassword = bcrypt.hashSync(password, 10);
 
@@ -60,15 +76,17 @@ async function insertUser(req, res) {
   const sql = "INSERT INTO `users` (`username`, `hashed_password`, `phone_number`) VALUES (?,?,?)";
   try {
     result = await executeSql(sql, [username, hashedPassword, phone]);
+    const userID = result.insertId;
+    // 插入refresh_token
+    await insertRefreshToken(userID);
+    // 注册成功，清除验证码记录，异步方法
+    clearCaptcha(captchaId);
+    // 注册成功，返回响应信息
+    return res.json(jsondata("0000", "注册成功", result));
   } catch (error) {
     // console.log(error);
-    return res.json(jsondata("1002", "注册失败", error));
+    return res.json(jsondata("1002", `注册失败: ${error.message}`, error));
   }
-
-  // 注册成功，清除验证码记录
-  clearCaptcha(captchaId);
-  // 注册成功，返回响应信息
-  res.json(jsondata("0000", "注册成功", result));
 }
 
 // 查询用户名是否可用
