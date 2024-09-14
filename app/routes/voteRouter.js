@@ -6,12 +6,58 @@ import jsondata from "../utils/jsondata.js";
 
 const router = express.Router();
 
+// 获取不同活动的投票总数
+async function getTotolVotes() {
+  // 获取已结束活动的投票总数
+  const sql = `
+    SELECT uv.vote_activity_id AS activity_id,
+          COUNT(*)            AS total_votes
+    FROM user_vote_records uv
+            INNER JOIN
+        vote_activities va ON uv.vote_activity_id = va.activity_id
+    WHERE va.is_ended = 1
+    GROUP BY uv.vote_activity_id;
+  `;
+
+  let result;
+  try {
+    result = await executeSql(sql);
+  } catch (error) {
+    throw error;
+  }
+
+  const totalVotes = result.reduce((acc, cur) => {
+    acc[cur.activity_id] = cur.total_votes;
+    return acc;
+  }, {});
+
+  console.log("Total votes:", totalVotes);
+
+  // 获取未结束活动的投票总数
+  for (const id in voteCache) {
+    if (voteCache.hasOwnProperty(id)) {
+      const activityId = voteCache[id].activityId;
+      const voteCount = voteCache[id].voteCount;
+      totalVotes[activityId] = voteCount;
+    }
+  }
+
+  console.log("Total votes:", totalVotes);
+
+  return totalVotes;
+}
+
 // 获取全部投票活动列表
 async function getVoteActivities() {
   try {
     // 获取投票活动列表
     const sql = "SELECT * FROM `vote_activities`";
     const result = await executeSql(sql);
+    // 获取每个投票活动的投票总数
+    const totalVotes = await getTotolVotes();
+    for (const row of result) {
+      row.total_votes = totalVotes[row.activity_id] || 0;
+    }
     return result;
   } catch (error) {
     throw error;
@@ -20,25 +66,24 @@ async function getVoteActivities() {
 
 // 从数据库读取投票缓存
 async function getVoteCache() {
-  // 获取投票活动未结束的投票记录
-  const sql = "SELECT * FROM `vote_info` WHERE `vote_activity_id` IN (SELECT `activity_id` FROM `vote_activities` WHERE `is_ended`=0);";
+  // 投票缓存
+  const voteCache = {};
   try {
+    // 获取投票活动未结束的投票记录
+    const sql = "SELECT * FROM `vote_info` WHERE `vote_activity_id` IN (SELECT `activity_id` FROM `vote_activities` WHERE `is_ended`=0);";
     const result = await executeSql(sql);
-    // 解析结果，更新缓存
-    const voteCache = {};
     result.forEach((row) => {
-      voteCache[row.id] = { voteCount: row.vote_count, activityId: row.vote_activity_id, isChanged: false };
+      voteCache[row.id] = { voteCount: row.vote_count, activityId: row.vote_activity_id, candidateName: row.candidate_name, isChanged: false };
     });
     return voteCache;
   } catch (error) {
-    // console.error(error);
     throw error;
   }
 }
 
 // 投票缓存
 let voteCache;
-// 缓存是否发生变化
+// 投票缓存是否发生变化
 let isChanged = false;
 
 // 服务启动时读取投票缓存，异步操作
@@ -54,11 +99,11 @@ let isChanged = false;
 /*
 voteCache基本结构
 voteCache = {
-  id1: {voteCount, activityId, isChanged},
-  id2: {voteCount, activityId, isChanged},
-  id3: {voteCount, activityId, isChanged},
-  id4: {voteCount, activityId, isChanged},
-  id5: {voteCount, activityId, isChanged},
+  id1: {voteCount, activityId, candidateName, isChanged},
+  id2: {voteCount, activityId, candidateName, isChanged},
+  id3: {voteCount, activityId, candidateName, isChanged},
+  id4: {voteCount, activityId, candidateName, isChanged},
+  id5: {voteCount, activityId, candidateName, isChanged},
   ...
 }
 */
@@ -232,11 +277,11 @@ router.get("/vote/:activityId", (req, res) => {
   // 获取投票数据
   const voteData = Object.keys(voteCache)
     .filter((id) => voteCache[id].activityId === activityId)
-    .map((id) => ({ id, voteCount: voteCache[id].voteCount }));
+    .map((id) => ({ id, candidateName: voteCache[id].candidateName, voteCount: voteCache[id].voteCount }));
   // console.log(voteData);
-  const totalCount = voteData.reduce((acc, cur) => acc + cur.voteCount, 0);
+  const totalVotes = voteData.reduce((acc, cur) => acc + cur.voteCount, 0);
   // 成功
-  return res.json(jsondata("0000", "获取投票数据成功", { totalCount, voteData }));
+  return res.json(jsondata("0000", "获取投票数据成功", { totalVotes, voteData }));
 });
 
 // 处理投票逻辑
@@ -296,7 +341,7 @@ router.post("/vote/activity", async (req, res) => {
     const insertId = result.insertId;
     // 更新投票缓存，将新插入的候选人列表的投票数初始化为0
     for (let i = 0; i < candidates.length; i++) {
-      voteCache[insertId + i] = { voteCount: 0, activityId, isChanged: false };
+      voteCache[insertId + i] = { voteCount: 0, activityId, candidateName: candidates[i], isChanged: false };
     }
     // console.log("Vote cache updated:", voteCache);
 

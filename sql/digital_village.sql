@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS `users`
 #     ADD COLUMN `has_new_notification` BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否有新的通知';
 
 
-
 # 用户详情表
 # CREATE TABLE IF NOT EXISTS `user_details`
 # (
@@ -143,4 +142,31 @@ CREATE TABLE IF NOT EXISTS `user_vote_records`
     `vote_activity_id` INT NOT NULL COMMENT '投票活动id',
     UNIQUE KEY `unique_user_vote` (`user_id`, `vote_activity_id`)
 );
+
+
+# 记录消息通知
+CREATE TABLE IF NOT EXISTS `notifications`
+(
+    `id`                INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增键',
+    `user_id`           INT          NOT NULL COMMENT '用户id',
+    `notification_type` TINYINT      NOT NULL COMMENT '通知类型，比如是问政回复的通知',
+    `item_id`           INT          NOT NULL COMMENT '具体类型的id，比如是哪篇问政文章的id',
+    `message`           VARCHAR(255) NOT NULL COMMENT '通知消息，如：你的xx问政已回复',
+    `time`              DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '通知时间',
+    `is_read`           BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否已读'
+);
+
+SELECT `vote_activity_id` AS `activity_id`, COUNT(*) AS `total_votes`
+FROM `user_vote_records`
+WHERE `vote_activity_id` IN (SELECT `activity_id` FROM `vote_activities` WHERE `is_ended` = 1)
+GROUP BY `vote_activity_id`;
+
+
+SELECT uv.vote_activity_id AS activity_id,
+       COUNT(*)            AS total_votes
+FROM user_vote_records uv
+         INNER JOIN
+     vote_activities va ON uv.vote_activity_id = va.activity_id
+WHERE va.is_ended = 1
+GROUP BY uv.vote_activity_id;
 
