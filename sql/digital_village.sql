@@ -143,6 +143,15 @@ CREATE TABLE IF NOT EXISTS `user_vote_records`
     UNIQUE KEY `unique_user_vote` (`user_id`, `vote_activity_id`)
 );
 
+# 统计已结束活动中每个活动的投票总数
+-- SELECT uv.vote_activity_id AS activity_id,
+--        COUNT(*)            AS total_votes
+-- FROM user_vote_records uv
+--          INNER JOIN
+--      vote_activities va ON uv.vote_activity_id = va.activity_id
+-- WHERE va.is_ended = 1
+-- GROUP BY uv.vote_activity_id;
+
 
 # 记录消息通知
 CREATE TABLE IF NOT EXISTS `notifications`
@@ -154,14 +163,19 @@ CREATE TABLE IF NOT EXISTS `notifications`
     `title`             VARCHAR(25)  NOT NULL COMMENT '通知标题',
     `message`           VARCHAR(255) NOT NULL COMMENT '通知消息，如：你的xx问政已回复',
     `time`              DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '通知时间',
-    `is_read`           BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否已读'
+    `is_read`           BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否已读',
+    UNIQUE KEY `unique_notification_index` (`user_id`, `notification_type`, `item_id`)
 );
 
--- SELECT uv.vote_activity_id AS activity_id,
---        COUNT(*)            AS total_votes
--- FROM user_vote_records uv
---          INNER JOIN
---      vote_activities va ON uv.vote_activity_id = va.activity_id
--- WHERE va.is_ended = 1
--- GROUP BY uv.vote_activity_id;
+# 当组合唯一键冲突时，更新指定字段值
+# INSERT INTO notifications (user_id, notification_type, item_id, title, message)
+# VALUES (?, ?, ?, ?, ?)
+# ON DUPLICATE KEY UPDATE title   = VALUES(title),
+#                         message = VALUES(message),
+#                         time    = CURRENT_TIMESTAMP(),
+#                         is_read = FALSE;
 
+
+UPDATE `notifications` SET `is_read` = TRUE WHERE user_id = 3 AND `is_read` = FALSE;
+
+UPDATE `notifications` SET `is_read`=TRUE WHERE id=2;

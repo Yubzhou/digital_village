@@ -8,6 +8,7 @@ import { executeSql, querySql } from "../utils/dbTools.js";
 import jsondata from "../utils/jsondata.js";
 import adminAuthMiddleware from "../middlewares/adminAuthMiddleware.js";
 import { saveNotification } from "../utils/notificationTools.js";
+import getOptions from "../utils/paginationTools.js";
 // 导入配置文件
 import { NOTIFICATION_TYPE } from "../config/config.js";
 
@@ -81,26 +82,6 @@ async function getTotal(queryCondition = "") {
   const sql = "SELECT COUNT(*) AS `total` FROM `e_participation`" + queryCondition;
   const result = await querySql(sql, []);
   return result.length > 0 ? result[0].total : 0;
-}
-
-// 根据配置获取查询方式（全部获取还是分页获取）
-function getOptions(options) {
-  // 默认分页配置
-  const defaultOptions = {
-    part: true,
-    page: 1,
-    size: 10,
-  };
-  let { part, page, size } = Object.assign(defaultOptions, options);
-  part = part === "true";
-  if (part) {
-    page = parseInt(page);
-    size = parseInt(size);
-    const [offset, limit] = [(page - 1) * size, size];
-    return { part, offset, limit };
-  } else {
-    return { part };
-  }
 }
 
 // 批量获取问政信息列表

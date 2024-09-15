@@ -2,15 +2,9 @@ import express from "express";
 import { executeSql, querySql } from "../utils/dbTools.js";
 import jsondata from "../utils/jsondata.js";
 import adminAuthMiddleware from "../middlewares/adminAuthMiddleware.js";
+import getOptions from "../utils/paginationTools.js";
 
 const router = express.Router();
-
-// 默认分页参数
-const defaultOptions = {
-  part: true,
-  page: 1,
-  size: 10,
-};
 
 // 获取留言总数
 async function getTotal() {
@@ -19,19 +13,6 @@ async function getTotal() {
   return result.length > 0 ? result[0].total : 0;
 }
 
-// 根据配置获取查询方式（全部获取还是分页获取）
-function getOptions(options) {
-  let { part, page, size } = Object.assign(defaultOptions, options);
-  part = part === "true";
-  if (part) {
-    page = parseInt(page);
-    size = parseInt(size);
-    const [offset, limit] = [(page - 1) * size, size];
-    return { part, offset, limit };
-  } else {
-    return { part };
-  }
-}
 
 // 批量获取留言，需要管理员权限
 router.get("/feedbacks", adminAuthMiddleware, async (req, res) => {
