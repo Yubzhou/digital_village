@@ -47,6 +47,18 @@ async function getTotolVotes() {
   return totalVotes;
 }
 
+// 获取投票活动详情
+async function getVoteActivity(activityId) {
+  try {
+    // 获取投票活动详情
+    const sql = "SELECT * FROM `vote_activities` WHERE `activity_id`=?";
+    const result = await executeSql(sql, [activityId]);
+    return result[0];
+  } catch (error) {
+    throw error;
+  }
+}
+
 // 获取全部投票活动列表
 async function getVoteActivities() {
   try {
@@ -264,7 +276,7 @@ router.get("/vote/user-vote-record/:activityId", async (req, res) => {
 });
 
 // 获取指定投票活动的投票数据
-router.get("/vote/:activityId", (req, res) => {
+router.get("/vote/:activityId", async (req, res) => {
   let activityId = req.params.activityId;
 
   // 验证activityId是否合法，即是否为正整数
@@ -274,6 +286,8 @@ router.get("/vote/:activityId", (req, res) => {
   }
   // 转换为整数
   activityId = parseInt(activityId);
+  // 获取投票活动详情
+  const activity = await getVoteActivity(activityId);
   // 获取投票数据
   const voteData = Object.keys(voteCache)
     .filter((id) => voteCache[id].activityId === activityId)
@@ -281,7 +295,7 @@ router.get("/vote/:activityId", (req, res) => {
   // console.log(voteData);
   const totalVotes = voteData.reduce((acc, cur) => acc + cur.voteCount, 0);
   // 成功
-  return res.json(jsondata("0000", "获取投票数据成功", { totalVotes, voteData }));
+  return res.json(jsondata("0000", "获取投票数据成功", { activity, totalVotes, voteData }));
 });
 
 // 处理投票逻辑

@@ -1,6 +1,6 @@
 import express from "express";
-import { executeSql } from "../../utils/dbTools.js";
 import jsondata from "../../utils/jsondata.js";
+import { getNotificationList } from "../../utils/notificationTools.js";
 
 const router = express.Router();
 
@@ -10,8 +10,7 @@ router.get("/notification", async (req, res) => {
   const { sub: userID } = req.auth;
   try {
     // 查询数据库获取用户的通知, 按最新通知排序
-    const sql = "SELECT * FROM `notifications` WHERE `user_id`=? ORDER BY `id` DESC";
-    const notifications = await executeSql(sql, [userID]);
+    const notifications = await getNotificationList(userID, req.query);
     res.json(jsondata("0000", "获取成功", notifications));
   } catch (error) {
     // console.log(error);

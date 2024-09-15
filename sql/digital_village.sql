@@ -151,22 +151,17 @@ CREATE TABLE IF NOT EXISTS `notifications`
     `user_id`           INT          NOT NULL COMMENT '用户id',
     `notification_type` TINYINT      NOT NULL COMMENT '通知类型，比如是问政回复的通知',
     `item_id`           INT          NOT NULL COMMENT '具体类型的id，比如是哪篇问政文章的id',
+    `title`             VARCHAR(25)  NOT NULL COMMENT '通知标题',
     `message`           VARCHAR(255) NOT NULL COMMENT '通知消息，如：你的xx问政已回复',
     `time`              DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '通知时间',
     `is_read`           BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否已读'
 );
 
-SELECT `vote_activity_id` AS `activity_id`, COUNT(*) AS `total_votes`
-FROM `user_vote_records`
-WHERE `vote_activity_id` IN (SELECT `activity_id` FROM `vote_activities` WHERE `is_ended` = 1)
-GROUP BY `vote_activity_id`;
-
-
-SELECT uv.vote_activity_id AS activity_id,
-       COUNT(*)            AS total_votes
-FROM user_vote_records uv
-         INNER JOIN
-     vote_activities va ON uv.vote_activity_id = va.activity_id
-WHERE va.is_ended = 1
-GROUP BY uv.vote_activity_id;
+-- SELECT uv.vote_activity_id AS activity_id,
+--        COUNT(*)            AS total_votes
+-- FROM user_vote_records uv
+--          INNER JOIN
+--      vote_activities va ON uv.vote_activity_id = va.activity_id
+-- WHERE va.is_ended = 1
+-- GROUP BY uv.vote_activity_id;
 

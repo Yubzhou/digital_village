@@ -7,6 +7,9 @@ import { fileURLToPath } from "url";
 import { executeSql, querySql } from "../utils/dbTools.js";
 import jsondata from "../utils/jsondata.js";
 import adminAuthMiddleware from "../middlewares/adminAuthMiddleware.js";
+import { saveNotification } from "../utils/notificationTools.js";
+// 导入配置文件
+import { NOTIFICATION_TYPE } from "../config/config.js";
 
 const router = express.Router();
 
@@ -53,7 +56,7 @@ async function saveInfoToMySQL(req, res, params) {
 }
 
 // post提交多个问政信息, array 表示接受多个文件，input name="pic"
-router.post("/e-participation/post", upload.array("pic", 9), async (req, res) => {  
+router.post("/e-participation/post", upload.array("pic", 9), async (req, res) => {
   // 获取当前用户id
   const { sub: userID, username } = req.auth;
   const { title, content, location, address } = req.body;
@@ -73,13 +76,6 @@ router.post("/e-participation/post", upload.array("pic", 9), async (req, res) =>
 
 // ================================================================
 
-// 默认分页配置
-const defaultOptions = {
-  part: true,
-  page: 1,
-  size: 10,
-};
-
 // 获取数据库总问政文章总数
 async function getTotal(queryCondition = "") {
   const sql = "SELECT COUNT(*) AS `total` FROM `e_participation`" + queryCondition;
@@ -89,6 +85,12 @@ async function getTotal(queryCondition = "") {
 
 // 根据配置获取查询方式（全部获取还是分页获取）
 function getOptions(options) {
+  // 默认分页配置
+  const defaultOptions = {
+    part: true,
+    page: 1,
+    size: 10,
+  };
   let { part, page, size } = Object.assign(defaultOptions, options);
   part = part === "true";
   if (part) {
@@ -198,7 +200,7 @@ router.get("/e-participation/filter/:status(0|1)", async (req, res) => {
   const { part, offset, limit } = getOptions(req.query);
   const { status } = req.params;
   console.log(status);
-  
+
   // 获取总数
   const total = await getTotal(" WHERE `status`=" + status);
   try {
@@ -261,6 +263,11 @@ router.patch("/e-participation/reply", adminAuthMiddleware, async (req, res) => 
     if (result.affectedRows === 0) {
       return res.json(jsondata("1002", "回复失败，问政信息不存在。请检查id是否正确。", ""));
     }
+    // 查询用户ID，异步保存通知到数据库
+    const sql2 = "SELECT `user_id` FROM `e_participation` WHERE `id`=? LIMIT 1";
+    const result2 = await executeSql(sql2, [id]);
+    const userID = result2[0].user_id;
+    saveNotification(userID, NOTIFICATION_TYPE.E_PARTICIPATION, id);
     return res.json(jsondata("0000", "回复成功", ""));
   } catch (error) {
     return res.json(jsondata("1001", `回复失败: ${error.message}`, error));
