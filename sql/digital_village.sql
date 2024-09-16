@@ -119,20 +119,46 @@ CREATE TABLE IF NOT EXISTS `vote_info`
     `vote_activity_id` INT          NOT NULL COMMENT '投票活动id，表示是哪场活动',
     `vote_count`       INT          NOT NULL DEFAULT 0 COMMENT '获得的投票数量',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `unique_candidate_activity` (`candidate_id`, `vote_activity_id`)
+    UNIQUE KEY `unique_candidate_activity` (`candidate_id`, `vote_activity_id`),
+    FOREIGN KEY (`vote_activity_id`) REFERENCES `vote_activities` (`activity_id`) ON DELETE CASCADE ON UPDATE CASCADE # 级联删除或更新
 );
+
+# 添加外键
+ALTER TABLE `vote_info`
+    ADD CONSTRAINT `fk_vote_activity1`
+        FOREIGN KEY (`vote_activity_id`)
+            REFERENCES `vote_activities` (`activity_id`)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
+
+# 删除外键
+ALTER TABLE `vote_info`
+    DROP FOREIGN KEY `fk_vote_activity1`;
+
+
 
 # 记录投票活动信息
 CREATE TABLE IF NOT EXISTS `vote_activities`
 (
-    `activity_id`   INT          NOT NULL AUTO_INCREMENT COMMENT '投票活动id',
-    `activity_name` VARCHAR(255) NOT NULL COMMENT '投票活动名字',
-    `description`   TEXT         NOT NULL COMMENT '投票活动的描述',
-    `start_time`    DATETIME     NOT NULL COMMENT '开始时间',
-    `end_time`      DATETIME     NOT NULL COMMENT '结束时间',
-    `is_ended`      BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '活动是否结束，默认未结束',
+    `activity_id`    INT          NOT NULL AUTO_INCREMENT COMMENT '投票活动id',
+    `activity_name`  VARCHAR(255) NOT NULL COMMENT '投票活动名字',
+    `description`    TEXT         NOT NULL COMMENT '投票活动的描述',
+    `activity_cover` VARCHAR(255) COMMENT '用户上传的活动封面url，如果没有则使用默认封面',
+    `start_time`     DATETIME     NOT NULL COMMENT '开始时间',
+    `end_time`       DATETIME     NOT NULL COMMENT '结束时间',
+    `is_ended`       BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '活动是否结束，默认未结束',
     PRIMARY KEY (`activity_id`)
 );
+
+
+
+UPDATE `vote_activities`
+SET `is_ended` = 1
+WHERE `activity_id` IN (1, 2, 3);
+
+# 将`activity_cover`字段添加到`description`字段后面
+ALTER TABLE `vote_activities`
+    ADD `activity_cover` VARCHAR(255) COMMENT '用户上传的活动封面url，如果没有则使用默认封面' AFTER `description`;
 
 # 记录用户投票活动的表
 CREATE TABLE IF NOT EXISTS `user_vote_records`
@@ -140,8 +166,17 @@ CREATE TABLE IF NOT EXISTS `user_vote_records`
     `record_id`        INT AUTO_INCREMENT PRIMARY KEY,
     `user_id`          INT NOT NULL COMMENT '用户id',
     `vote_activity_id` INT NOT NULL COMMENT '投票活动id',
-    UNIQUE KEY `unique_user_vote` (`user_id`, `vote_activity_id`)
+    UNIQUE KEY `unique_user_vote` (`user_id`, `vote_activity_id`),
+    FOREIGN KEY (`vote_activity_id`) REFERENCES `vote_activities` (`activity_id`) ON DELETE CASCADE ON UPDATE CASCADE # 级联删除或更新
 );
+
+# 添加外键
+ALTER TABLE `user_vote_records`
+    ADD CONSTRAINT `fk_vote_activity2`
+        FOREIGN KEY (`vote_activity_id`)
+            REFERENCES `vote_activities` (`activity_id`)
+            ON DELETE CASCADE
+            ON UPDATE CASCADE;
 
 # 统计已结束活动中每个活动的投票总数
 -- SELECT uv.vote_activity_id AS activity_id,
@@ -176,6 +211,11 @@ CREATE TABLE IF NOT EXISTS `notifications`
 #                         is_read = FALSE;
 
 
-UPDATE `notifications` SET `is_read` = TRUE WHERE user_id = 3 AND `is_read` = FALSE;
+UPDATE `notifications`
+SET `is_read` = TRUE
+WHERE user_id = 3
+  AND `is_read` = FALSE;
 
-UPDATE `notifications` SET `is_read`=TRUE WHERE id=2;
+UPDATE `notifications`
+SET `is_read`= TRUE
+WHERE id = 2;

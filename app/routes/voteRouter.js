@@ -3,6 +3,7 @@ import express from "express";
 // 导入自定义模块
 import { executeSql, getConnection, insertMany } from "../utils/dbTools.js";
 import jsondata from "../utils/jsondata.js";
+import adminAuthMiddleware from "../middlewares/adminAuthMiddleware.js";
 
 const router = express.Router();
 
@@ -60,6 +61,8 @@ async function getVoteActivity(activityId) {
 // 获取全部投票活动列表
 async function getVoteActivities() {
   try {
+    // 更新投票活动状态, 即将过期活动置为已结束
+    await updateVoteActivities();
     // 获取投票活动列表
     const sql = "SELECT * FROM `vote_activities`";
     const result = await executeSql(sql);
@@ -74,11 +77,47 @@ async function getVoteActivities() {
   }
 }
 
-// 从数据库读取投票缓存
+// 将过期活动置为已结束
+async function updateVoteActivities() {
+  try {
+    // 获取所有未结束的投票活动
+    const sql = "SELECT * FROM `vote_activities` WHERE `is_ended`=0";
+    const result = await executeSql(sql);
+
+    // 从result中筛选出已过期的活动id
+    const expiredActivityIds = result
+      .filter((row) => {
+        const { end_time } = row;
+        const end = new Date(end_time).getTime();
+        const now = Date.now();
+        return end <= now;
+      })
+      .map((row) => row.activity_id);
+
+    // 根据数组长度构建占位符字符串，例如：'?, ?, ?, ?, ?'
+    const placeholders = expiredActivityIds.map(() => "?").join(", ");
+    if (expiredActivityIds.length > 0) {
+      // 存在过期活动，更新数据库
+      // 批量更新数据库，将过期活动的状态设置为已结束
+      const sql2 = "UPDATE `vote_activities` SET `is_ended`=1 WHERE `activity_id` IN (" + placeholders + ")";
+      await executeSql(sql2, [...expiredActivityIds]);
+
+      // 批量更新缓存
+      await updateDBPartForEnd(expiredActivityIds);
+    }
+    console.log("Vote activities is_ended updated.");
+  } catch (error) {
+    throw error;
+  }
+}
+
+// 从数据库读取投票缓存, 并将过期活动置为已结束
 async function getVoteCache() {
   // 投票缓存
   const voteCache = {};
   try {
+    // 更新投票活动状态, 即将过期活动置为已结束
+    await updateVoteActivities();
     // 获取投票活动未结束的投票记录
     const sql = "SELECT * FROM `vote_info` WHERE `vote_activity_id` IN (SELECT `activity_id` FROM `vote_activities` WHERE `is_ended`=0);";
     const result = await executeSql(sql);
@@ -92,7 +131,7 @@ async function getVoteCache() {
 }
 
 // 投票缓存
-let voteCache;
+let voteCache = {};
 // 投票缓存是否发生变化
 let isChanged = false;
 
@@ -153,7 +192,7 @@ async function endActivity(activityId) {
     const result = await executeSql(sql, [activityId]);
     if (result.affectedRows === 1) {
       // 更新缓存
-      await updateDBPartForEnd(activityId);
+      await updateDBPartForEnd([activityId]);
       console.log("Vote cache partly updated for activity end:", voteCache);
       return true;
     }
@@ -164,20 +203,22 @@ async function endActivity(activityId) {
   }
 }
 
-// 当有活动结束时，将投票数据部分更新到数据库
-async function updateDBPartForEnd(activityId) {
+// 当有活动结束时，将投票数据部分更新到数据库, 传入数组
+async function updateDBPartForEnd(activityIds) {
+  // 确保数组不为空
+  if (voteCache.length === 0 || activityIds.length === 0) return;
   const sql = "UPDATE `vote_info` SET `vote_count`=? WHERE `id`=? LIMIT 1";
   try {
     // 获取数据库连接
     const connection = await getConnection();
     // 遍历缓存，更新数据库
-    const ids = Object.keys(voteCache).filter((id) => voteCache[id].activityId === activityId);
+    const ids = Object.keys(voteCache).filter((id) => activityIds.includes(voteCache[id].activityId));
     // 遍历数组
     for (const id of ids) {
       const candidate = voteCache[id];
       if (candidate.isChanged) {
         const [result] = await connection.execute(sql, [candidate.voteCount, id]);
-        result.affectedRows === 1 && (candidate.isChanged = false);
+        result.affectedRows > 1 && (candidate.isChanged = false);
       }
       // 移除缓存中已结束的投票记录
       delete voteCache[id];
@@ -308,6 +349,11 @@ router.post("/vote", async (req, res) => {
     return res.json(jsondata("1001", "投票id不合法", "id参数必须为正整数（大于0）"));
   }
   try {
+    // 获取候选人
+    const candidate = voteCache[id];
+    if (!candidate) {
+      return res.json(jsondata("1002", "投票失败", "投票活动不存在或已结束"));
+    }
     // 插入用户的投票记录
     await insertUserVoteRecord(userID, voteCache[id].activityId);
     // 更新投票缓存
@@ -317,9 +363,9 @@ router.post("/vote", async (req, res) => {
     return res.json(jsondata("0000", "投票成功", { id, voteCount: voteCache[id].voteCount }));
   } catch (error) {
     if (error.code === "ER_DUP_ENTRY") {
-      return res.json(jsondata("1002", "投票失败", "请勿重复投票"));
+      return res.json(jsondata("1003", "投票失败", "请勿重复投票"));
     }
-    return res.json(jsondata("1003", `投票失败: ${error.message}`, error));
+    return res.json(jsondata("1004", `投票失败: ${error.message}`, error));
   }
 });
 
@@ -336,7 +382,7 @@ async function postVoteActivity(params) {
 }
 
 // 发布投票活动，需要输入活动名称和描述，以及候选人列表
-router.post("/vote/activity", async (req, res) => {
+router.post("/vote/activity", adminAuthMiddleware, async (req, res) => {
   // 活动名称、描述、候选人列表
   const { activityName, description, startTime, endTime, candidates } = req.body;
 
@@ -383,6 +429,62 @@ router.post("/vote/activity/end", async (req, res) => {
   } catch (error) {
     // console.error(error);
     return res.json(jsondata("1002", `活动结束失败: ${error.message}`, error));
+  }
+});
+
+// 删除投票活动
+async function deleteVoteActivity(activityId) {
+  try {
+    // 删除投票活动会自动删掉对应的投票数据, 因为数据库外键设置了ON DELETE CASCADE
+    const sql = "DELETE FROM `vote_activities` WHERE `activity_id`=? LIMIT 1";
+    const result = await executeSql(sql, [activityId]);
+    return result.affectedRows > 0;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// 删除投票活动, 只有活动结束后才能删除, 且需要管理员权限
+router.delete("/vote/activity/:activityId", adminAuthMiddleware, async (req, res) => {
+  const activityId = req.params.activityId;
+  // 验证activityId是否合法，即是否为正整数
+  const isValidActivityId = /^[1-9]\d*$/;
+  if (!isValidActivityId.test(activityId)) {
+    return res.json(jsondata("1001", "投票活动id不合法", "activityId参数必须为正整数（大于0）"));
+  }
+  let sql, result;
+  try {
+    // 判断活动是否已结束
+    sql = "SELECT `start_time`, `end_time`, `is_ended` FROM `vote_activities` WHERE `activity_id`=? LIMIT 1";
+    result = await executeSql(sql, [activityId]);
+    if (result.length === 0) {
+      return res.json(jsondata("1002", "删除失败", "活动不存在 or 已删除"));
+    }
+    const activity = result[0];
+    const now = Date.now();
+    const start = new Date(activity.start_time).getTime();
+    const end = new Date(activity.end_time).getTime();
+    // 如果is_ended为0，且当前时间在活动开始时间和结束时间之间，则不能删除
+    if (activity.is_ended === 0 && start <= now && now < end) {
+      return res.json(jsondata("1003", "删除失败", "投票活动正在进行中，删除失败"));
+    }
+    // 删除活动
+    const isSuccess = await deleteVoteActivity(activityId);
+    if (!isSuccess) {
+      // 失败
+      return res.json(jsondata("1004", "删除失败", "活动不存在 or 已删除"));
+    }
+    // 成功
+    if (activity.is_ended === 0 && now < start) {
+      // 如果活动还未开始, 允许删除活动
+      return res.json(jsondata("0000", "删除成功", "活动尚未开始，删除成功"));
+    } else {
+      // 活动已结束，允许删除活动
+      return res.json(jsondata("0000", "删除成功", "活动已结束，删除成功"));
+    }
+  } catch (error) {
+    console.error(error);
+    return res.json(jsondata("1005", `删除投票活动失败: ${error.message}`, error));
   }
 });
 

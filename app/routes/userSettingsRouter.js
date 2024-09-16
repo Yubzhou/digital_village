@@ -1,7 +1,7 @@
 import express from "express";
 
 // 导入自定义路由
-import uploadProfileRouter from "./userSettings/uploadProfileRouter.js";
+import uploadProfileRouter from "./uploads/uploadProfileRouter.js";
 import userInfoRouter from "./userSettings/userInfoRouter.js";
 import notificationRouter from "./userSettings/notificationRouter.js";
 import updateUserAccountRouter from "./userSettings/updateUserAccountRouter.js";

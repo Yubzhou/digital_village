@@ -102,9 +102,10 @@ app.all("*", (req, res) => {
 
 // 处理报错
 app.use((err, req, res, next) => {
-  console.log(err);
+  // console.log(err);
   if (err.name === "UnauthorizedError") {
     res.status(401).json(jsondata(err.status, err.inner.message, err));
+    console.log(err.inner.message);
   } else {
     res.status(500).json(jsondata("5000", `服务器内部错误: ${err.message}`, err));
   }

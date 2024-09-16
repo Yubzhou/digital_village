@@ -25,3 +25,6 @@ createDirectory(dirPath);
 // 用户头像上传目录
 dirPath = './app/public/uploads/profile';
 createDirectory(dirPath);
+// 投票图片上传目录
+dirPath = './app/public/uploads/vote';
+createDirectory(dirPath);

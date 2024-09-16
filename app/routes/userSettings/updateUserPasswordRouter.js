@@ -8,6 +8,7 @@ const router = express.Router();
 
 // 用于存储已验证旧密码的用户状态的缓存对象，如果5分钟内用户没有修改密码，则会被清除
 const verifiedUsers = {};
+let isChanged = false; // 用于标记缓存是否发生变化
 /*
 verifiedUsers 缓存对象基本结构
 verifiedUsers = {
@@ -55,6 +56,7 @@ router.post("/user/password/check", async (req, res) => {
   // 存储用户的验证状态和当前时间戳
   verifiedUsers[userID] = { timeStamp: Date.now(), oldPassword }; // 存储当前时间戳 和 旧密码
   // console.log('verifiedUsers: ', verifiedUsers);
+  isChanged = true; // 标记缓存发生变化
 
   // 返回结果
   return res.json(jsondata("0000", "旧密码正确", ""));
@@ -124,5 +126,20 @@ router.patch("/user/password/update", checkOldPasswordVerified, checkNewPassword
   // 返回结果
   return res.json(jsondata("0000", "密码修改成功", ""));
 });
+
+// 每隔1小时检查一次缓存，清除过期的验证记录
+setInterval(() => {
+  const now = Date.now();
+  if (!isChanged) return; // 缓存未发生变化，不用检查
+  for (const userID in verifiedUsers) {
+    if (!verifiedUsers.hasOwnProperty(userID)) continue;
+    const verifiedUser = verifiedUsers[userID];
+    if (now - verifiedUser.timeStamp > 5 * 60 * 1000) {
+      delete verifiedUsers[userID]; // 超过5分钟则删除记录
+    }
+  }
+  // 清除缓存后，标记缓存为未发生变化
+  isChanged = false;
+}, 60 * 60 * 1000);
 
 export default router;
