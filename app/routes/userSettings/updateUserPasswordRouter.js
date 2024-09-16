@@ -6,8 +6,18 @@ import { checkPassword } from "../../utils/checkData.js";
 
 const router = express.Router();
 
-// 用于存储已验证旧密码的用户状态的缓存对象
+// 用于存储已验证旧密码的用户状态的缓存对象，如果5分钟内用户没有修改密码，则会被清除
 const verifiedUsers = {};
+/*
+verifiedUsers 缓存对象基本结构
+verifiedUsers = {
+  "userID": { timeStamp, oldPassword },
+  "user1": { 1622222222222, "123456" },
+  "user2": { 1622222225555, "654321" },
+  "user3": { 1622222228888, "abc123" },
+  ...
+}
+*/
 
 // 根据用户ID获取用户信息
 async function getUserByID(userID) {
@@ -35,15 +45,15 @@ router.post("/user/password/check", async (req, res) => {
     // 验证用户输入的旧密码是否正确，使用 bcrypt.compareSync() 方法，同步方法
     const isMatch = bcrypt.compareSync(oldPassword, user.hashed_password);
     if (!isMatch) {
-      return res.status(401).json(jsondata("1002", "密码错误", ""));
+      return res.status(401).json(jsondata("1002", "旧密码错误", ""));
     }
   } catch (error) {
     // console.error(error);
     return res.json(jsondata("1003", `校验旧密码出错: ${error.message}`, error));
   }
 
-  // 缓存已验证的用户状态
-  verifiedUsers[userID] = true;
+  // 存储用户的验证状态和当前时间戳
+  verifiedUsers[userID] = { timeStamp: Date.now(), oldPassword }; // 存储当前时间戳 和 旧密码
   // console.log('verifiedUsers: ', verifiedUsers);
 
   // 返回结果
@@ -53,8 +63,24 @@ router.post("/user/password/check", async (req, res) => {
 // 中间件：检查用户是否已验证旧密码
 function checkOldPasswordVerified(req, res, next) {
   const { sub: userID } = req.auth;
-  if (!verifiedUsers[userID]) {
+  const verifiedUser = verifiedUsers[userID];
+
+  // 检查用户是否已验证，以及是否在5分钟内
+  if (!verifiedUser || Date.now() - verifiedUser.timeStamp > 5 * 60 * 1000) {
+    // 5分钟的时间间隔
+    delete verifiedUsers[userID]; // 超过5分钟则删除记录
     return res.status(403).json(jsondata("1004", "请先验证旧密码", ""));
+  }
+  next();
+}
+
+// 检查新密码是否与原密码相同，如果相同则返回错误信息
+function checkNewPasswordSame(req, res, next) {
+  const { sub: userID } = req.auth;
+  const { newPassword } = req.body;
+  const verifiedUser = verifiedUsers[userID];
+  if (verifiedUser && verifiedUser.oldPassword === newPassword) {
+    return res.status(403).json(jsondata("1005", "新密码不能与原密码相同", ""));
   }
   next();
 }
@@ -73,7 +99,7 @@ async function updateUserPassword(userID, newPassword) {
 }
 
 // 修改用户密码
-router.patch("/user/password/update", checkOldPasswordVerified, async (req, res) => {
+router.patch("/user/password/update", checkOldPasswordVerified, checkNewPasswordSame, async (req, res) => {
   // 获取用户ID
   const { sub: userID } = req.auth;
   // 获取用户输入的新密码
@@ -81,15 +107,15 @@ router.patch("/user/password/update", checkOldPasswordVerified, async (req, res)
   // 验证用户输入的新密码是否符合要求
   const isValid = checkPassword(newPassword);
   if (!isValid) {
-    return res.json(jsondata("1005", "输入的新密码格式错误", "密码必须为ASCII可见字符（除空格），长度6-15位"));
+    return res.json(jsondata("1006", "输入的新密码格式错误", "密码必须为ASCII可见字符（除空格），长度6-15位"));
   }
   try {
     // 更新用户密码
     const isSuccess = await updateUserPassword(userID, newPassword);
-    if (!isSuccess) return res.json(jsondata("1006", "密码修改失败", ""));
+    if (!isSuccess) return res.json(jsondata("1007", "密码修改失败", "该用户不存在"));
   } catch (error) {
     // console.error(error);
-    return res.json(jsondata("1007", `密码修改出错: ${error.message}`, error));
+    return res.json(jsondata("1008", `密码修改出错: ${error.message}`, error));
   }
 
   // 密码修改成功后，移除用户的已验证状态

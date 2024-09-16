@@ -31,14 +31,12 @@ async function getTotolVotes() {
     return acc;
   }, {});
 
-  console.log("Total votes:", totalVotes);
-
   // 获取未结束活动的投票总数
   for (const id in voteCache) {
     if (voteCache.hasOwnProperty(id)) {
       const activityId = voteCache[id].activityId;
       const voteCount = voteCache[id].voteCount;
-      totalVotes[activityId] = voteCount;
+      totalVotes[activityId] = (totalVotes[activityId] ?? 0) + voteCount;
     }
   }
 

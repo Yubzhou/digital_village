@@ -68,7 +68,7 @@ router.post("/login", async (req, res) => {
   const { account, password } = req.body;
 
   if (!checkEmpty([account, password])) {
-    return res.status(400).json(jsondata("1001", "用户名或密码不能为空", ""));
+    return res.status(400).json(jsondata("1001", "账号或密码不能为空", ""));
   }
 
   try {
