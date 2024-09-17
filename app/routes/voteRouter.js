@@ -4,8 +4,21 @@ import express from "express";
 import { executeSql, getConnection, insertMany } from "../utils/dbTools.js";
 import jsondata from "../utils/jsondata.js";
 import adminAuthMiddleware from "../middlewares/adminAuthMiddleware.js";
+import activityPictureRouter from "./uploads/activityPictureRouter.js";
 
 const router = express.Router();
+
+function formatTimestamp(timestamp) {
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0"); // 月份是从0开始的
+  const day = date.getDate().toString().padStart(2, "0");
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const seconds = date.getSeconds().toString().padStart(2, "0");
+
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
 // 获取不同活动的投票总数
 async function getTotolVotes() {
@@ -79,20 +92,44 @@ async function getVoteActivities() {
 
 // 将过期活动置为已结束
 async function updateVoteActivities() {
+  // 将当前时间与最近一次活动结束时间比较，如果当前时间大于最近一次活动结束时间，则更新数据库，否则退出
+  if (latestActiveActivityEndTime === 0) {
+    // 如果 latestActiveActivityEndTime 为 0，则说明全部活动都已结束，不需要更新
+    console.log("没有活动过期1...");
+
+    return;
+  }
+  const now = Date.now();
+  // 如果当前时间小于最近一次活动结束时间（减去5分钟，以防止误判），则退出（即没有活动过期）
+  if (now < latestActiveActivityEndTime - 5 * 60 * 1000) {
+    console.log("没有活动过期2...");
+    return;
+  }
+
+  console.log("开始更新投票活动状态...");
+
   try {
     // 获取所有未结束的投票活动
     const sql = "SELECT * FROM `vote_activities` WHERE `is_ended`=0";
     const result = await executeSql(sql);
 
-    // 从result中筛选出已过期的活动id
+    // 从result中筛选出全部已过期的活动id, 同时获取最近一次活动结束时间
+    const now = Date.now();
+    let lastEndTime = Infinity;
     const expiredActivityIds = result
       .filter((row) => {
         const { end_time } = row;
         const end = new Date(end_time).getTime();
-        const now = Date.now();
+        if (now < end && end < lastEndTime) {
+          lastEndTime = end;
+        }
         return end <= now;
       })
       .map((row) => row.activity_id);
+    // 更新最近一次未结束活动的结束时间, 当全部活动都已结束时，latestActiveActivityEndTime为0
+    latestActiveActivityEndTime = lastEndTime === Infinity ? 0 : lastEndTime;
+
+    console.log("最近一次活动结束时间:", formatTimestamp(latestActiveActivityEndTime));
 
     // 根据数组长度构建占位符字符串，例如：'?, ?, ?, ?, ?'
     const placeholders = expiredActivityIds.map(() => "?").join(", ");
@@ -116,8 +153,6 @@ async function getVoteCache() {
   // 投票缓存
   const voteCache = {};
   try {
-    // 更新投票活动状态, 即将过期活动置为已结束
-    await updateVoteActivities();
     // 获取投票活动未结束的投票记录
     const sql = "SELECT * FROM `vote_info` WHERE `vote_activity_id` IN (SELECT `activity_id` FROM `vote_activities` WHERE `is_ended`=0);";
     const result = await executeSql(sql);
@@ -135,10 +170,15 @@ let voteCache = {};
 // 投票缓存是否发生变化
 let isChanged = false;
 
+// 记录最近一次没过期的活动结束时间，初始化为null
+let latestActiveActivityEndTime = null;
+
 // 服务启动时读取投票缓存，异步操作
 (async () => {
   try {
     voteCache = await getVoteCache();
+    // 更新最近一次没过期的活动结束时间
+    await updateVoteActivities();
     console.log("Vote cache:", voteCache);
   } catch (error) {
     console.error("Failed to initialize vote cache:", error);
@@ -381,7 +421,10 @@ async function postVoteActivity(params) {
   }
 }
 
-// 发布投票活动，需要输入活动名称和描述，以及候选人列表
+// 使用图片上传中间件
+router.use("/", activityPictureRouter);
+
+// 发布投票活动，需要输入活动名称和描述，以及候选人列表, 需要管理员权限
 router.post("/vote/activity", adminAuthMiddleware, async (req, res) => {
   // 活动名称、描述、候选人列表
   const { activityName, description, startTime, endTime, candidates } = req.body;
@@ -402,6 +445,15 @@ router.post("/vote/activity", adminAuthMiddleware, async (req, res) => {
       voteCache[insertId + i] = { voteCount: 0, activityId, candidateName: candidates[i], isChanged: false };
     }
     // console.log("Vote cache updated:", voteCache);
+
+    const end = new Date(endTime).getTime();
+    // 如果latestActiveActivityEndTime为0，说明当前没有活动，则更新latestActiveActivityEndTime为活动结束时间
+    // 如果latestActiveActivityEndTime大于新发布的活动结束时间，则更新latestActiveActivityEndTime为新发布的活动结束时间
+    if (latestActiveActivityEndTime === 0 || latestActiveActivityEndTime > end) {
+      latestActiveActivityEndTime = end;
+    }
+
+    console.log("发布活动成功，最近一次活动结束时间:", formatTimestamp(latestActiveActivityEndTime));
 
     // 发布成功
     return res.json(jsondata("0000", "发布成功", { activityId, result }));
