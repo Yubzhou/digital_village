@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `users`
     `phone_number`         VARCHAR(20) UNIQUE COMMENT '手机号',
     `email`                VARCHAR(255) UNIQUE COMMENT '邮箱',
     `hashed_password`      VARCHAR(255) NOT NULL COMMENT '加密后的密码',
-    `avatar`              VARCHAR(255) COMMENT '用户上传的头像url，如果没有则使用默认头像',
+    `avatar`               VARCHAR(255) COMMENT '用户上传的头像url，如果没有则使用默认头像',
     `created_at`           TIMESTAMP             DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at`           TIMESTAMP             DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
     `is_admin`             BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否为管理员',
@@ -21,9 +21,8 @@ CREATE TABLE IF NOT EXISTS `users`
 # ALTER TABLE `users`
 #     ADD COLUMN `has_new_notification` BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否有新的通知';
 
-alter table `users`
-    change `profile` `avatar` varchar(255) null comment '用户上传的头像url，如果没有则使用默认头像';
-
+ALTER TABLE `users`
+    CHANGE `profile` `avatar` VARCHAR(255) NULL COMMENT '用户上传的头像url，如果没有则使用默认头像';
 
 
 # refresh_tokens表结构
@@ -197,3 +196,12 @@ CREATE TABLE IF NOT EXISTS `notifications`
 # UPDATE `notifications`
 # SET `is_read`= TRUE
 # WHERE id = 2;
+
+
+# 城市编码表
+CREATE TABLE IF NOT EXISTS `city_codes`
+(
+    `adcode`   INT PRIMARY KEY COMMENT '区域编码',
+    `name`     VARCHAR(255) COMMENT '名字'
+);
+
