@@ -21,8 +21,8 @@ CREATE TABLE IF NOT EXISTS `users`
 # ALTER TABLE `users`
 #     ADD COLUMN `has_new_notification` BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否有新的通知';
 
-ALTER TABLE `users`
-    CHANGE `profile` `avatar` VARCHAR(255) NULL COMMENT '用户上传的头像url，如果没有则使用默认头像';
+-- ALTER TABLE `users`
+--     CHANGE `profile` `avatar` VARCHAR(255) NULL COMMENT '用户上传的头像url，如果没有则使用默认头像';
 
 
 # refresh_tokens表结构
@@ -99,8 +99,8 @@ CREATE TABLE IF NOT EXISTS `vote_info`
     FOREIGN KEY (`vote_activity_id`) REFERENCES `vote_activities` (`activity_id`) ON DELETE CASCADE ON UPDATE CASCADE # 级联删除或更新
 );
 
-ALTER TABLE `vote_info`
-    ADD `candidate_profile` VARCHAR(255) COMMENT '候选人的头像url，如果没有则使用默认头像' AFTER `candidate_name`;
+-- ALTER TABLE `vote_info`
+--     ADD `candidate_profile` VARCHAR(255) COMMENT '候选人的头像url，如果没有则使用默认头像' AFTER `candidate_name`;
 
 # # 添加外键
 # ALTER TABLE `vote_info`

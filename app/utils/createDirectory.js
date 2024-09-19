@@ -23,7 +23,7 @@ function createDirectory(dir) {
 let dirPath = './app/public/uploads/e-participation';
 createDirectory(dirPath);
 // 用户头像上传目录
-dirPath = './app/public/uploads/profile';
+dirPath = './app/public/uploads/avatar';
 createDirectory(dirPath);
 // 投票图片上传目录
 dirPath = './app/public/uploads/vote';

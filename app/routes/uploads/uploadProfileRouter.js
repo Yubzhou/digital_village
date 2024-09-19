@@ -16,7 +16,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 自定义上传文件存储配置
-const dir = path.resolve(__dirname, "../../public/uploads/profile");
+const dir = path.resolve(__dirname, "../../public/uploads/avatar");
 console.log("图片上传目录：" + dir);
 
 // 存储位置
@@ -60,27 +60,27 @@ async function deleteFile(filePath) {
   }
 }
 
-// 上传用户头像接口，仅允许上传一张图片, 且上传图片的name属性必须为profile
-router.post("/upload/profile", upload.single("profile"), async (req, res) => {
+// 上传用户头像接口，仅允许上传一张图片, 且上传图片的name属性必须为avatar
+router.post("/upload/avatar", upload.single("avatar"), async (req, res) => {
   // 获取用户ID
   const { sub: userID } = req.auth;
   // 获取上传的图片
-  const profile = req.file;
-  if (!profile) {
+  const avatar = req.file;
+  if (!avatar) {
     return res.json(jsondata("1001", "上传图片失败", "上传的图片不存在 or 未选择图片"));
   }
-  // console.log("profile: ", profile);
-  const url = "/public/uploads/profile/" + profile.filename;
+  // console.log("avatar: ", avatar);
+  const url = "/public/uploads/avatar/" + avatar.filename;
   // console.log(url);
 
   // 删除原来的头像
-  const user = await executeSql("SELECT `profile` FROM `users` WHERE `user_id` =?", [userID]);
-  const oldProfile = user[0]?.profile;
-  if (oldProfile) {
+  const user = await executeSql("SELECT `avatar` FROM `users` WHERE `user_id` =?", [userID]);
+  const oldAvatar = user[0]?.avatar;
+  if (oldAvatar) {
     // 获取原有图片的文件名
-    const oldProfileFileName = oldProfile.split("/").pop();
+    const oldAvatarFileName = oldAvatar.split("/").pop();
     // 获取文件的绝对路径
-    const oldFilePath = path.join(dir, oldProfileFileName);
+    const oldFilePath = path.join(dir, oldAvatarFileName);
     console.log("oldFilePath: ", oldFilePath);
     deleteFile(oldFilePath); // 异步删除文件
   } else {
@@ -88,13 +88,13 @@ router.post("/upload/profile", upload.single("profile"), async (req, res) => {
   }
 
   // 更新用户头像
-  const sql = "UPDATE `users` SET `profile`=? WHERE `user_id`=?";
+  const sql = "UPDATE `users` SET `avatar`=? WHERE `user_id`=?";
   try {
     const result = await executeSql(sql, [url, userID]);
     if (result.affectedRows === 0) {
       return res.json(jsondata("1002", "更新用户头像失败", "该用户不存在"));
     }
-    return res.json(jsondata("0000", "更新用户头像成功", { profile: url }));
+    return res.json(jsondata("0000", "更新用户头像成功", { avatar: url }));
   } catch (error) {
     // console.log(error);
     return res.json(jsondata("1003", `更新用户头像失败: ${error.message}`, error));
