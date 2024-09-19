@@ -57,7 +57,8 @@ router.post("/logout", async (req, res) => {
   // 从请求头中获取用户id
   const { sub: userID } = req.auth;
   try {
-    await executeSql("DELETE FROM `refresh_tokens` WHERE `user_id`=? LIMIT 1", [userID]);
+    // 将iat置为0，使得refreshToken失效
+    await executeSql("UPDATE `refresh_tokens` SET `iat`=0 WHERE `user_id`=? LIMIT 1", [userID]);
     return res.json(jsondata("0000", "注销成功", ""));
   } catch (error) {
     // console.error(error);
