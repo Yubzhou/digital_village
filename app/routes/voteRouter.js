@@ -354,6 +354,21 @@ router.get("/vote/user-vote-record/:activityId", async (req, res) => {
   }
 });
 
+// 获取全部候选人的照片
+async function getCandidateProfiles(activityId) {
+  try {
+    const sql = "SELECT `id`, `candidate_profile` FROM `vote_info` WHERE `vote_activity_id` =?";
+    const candidates = await executeSql(sql, [activityId]);
+    const transformed = candidates.reduce((acc, candidate) => {
+      acc[candidate.id] = candidate.candidate_profile;
+      return acc;
+    }, {});
+    return transformed;
+  } catch (error) {
+    throw error;
+  }
+}
+
 // 获取指定投票活动的投票数据
 router.get("/vote/:activityId", async (req, res) => {
   let activityId = req.params.activityId;
@@ -373,6 +388,12 @@ router.get("/vote/:activityId", async (req, res) => {
     .map((id) => ({ id, candidateName: voteCache[id].candidateName, voteCount: voteCache[id].voteCount }));
   // console.log(voteData);
   const totalVotes = voteData.reduce((acc, cur) => acc + cur.voteCount, 0);
+  // 获取候选人照片
+  const candidateProfiles = await getCandidateProfiles(activityId);
+  // 合并数据
+  for (const candidate of voteData) {
+    candidate.candidateProfile = candidateProfiles[candidate.id];
+  }
   // 成功
   return res.json(jsondata("0000", "获取投票数据成功", { activity, totalVotes, voteData }));
 });
