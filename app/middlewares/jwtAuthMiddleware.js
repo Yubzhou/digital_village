@@ -14,7 +14,7 @@ const jwtAuth = expressjwt({
   // 设置jwt认证白名单，比如/login登录接口不需要拦截
 }).unless({
   // path: ["/api/register", { url: "/api/login/:username", methods: ["get"] }],
-  path: [/^\/public\//, /^\/api\/news/, /^\/api\/login/, /^\/api\/register/, '/api/captcha', '/api/refresh'],
+  path: [/^\/public\//, /^\/api\/news/, /^\/api\/grain\//, /^\/api\/login/, /^\/api\/register/, '/api/captcha', '/api/refresh'],
 });
 
 export default jwtAuth;

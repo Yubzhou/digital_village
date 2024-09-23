@@ -28,6 +28,7 @@ import feedbackRouter from "./app/routes/feedbackRouter.js";
 import eParticipationRouter from "./app/routes/eParticipationRouter.js";
 import { router as voteRouter, saveCacheOnExit } from "./app/routes/voteRouter.js";
 import userSettingsRouter from "./app/routes/userSettingsRouter.js";
+import grainPriceRouter from "./app/routes/grainPriceRouter.js";
 
 // 导入自定义工具
 import jsondata from "./app/utils/jsondata.js";
@@ -94,6 +95,9 @@ app.use("/api", voteRouter);
 
 // 使用路由中间件，用户个人中心路由
 app.use("/api", userSettingsRouter);
+
+// 使用路由中间件，粮食收购价路由
+app.use("/api", grainPriceRouter);
 
 // 处理 404 错误
 app.all("*", (req, res) => {
