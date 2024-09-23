@@ -21,9 +21,9 @@ function getGrainPriceData() {
 
 const priceData = getGrainPriceData();
 
-// 获取全部日期
+// 获取全部日期，按最新日期排序
 router.get("/grain/purchase/dates", (req, res) => {
-  const dates = Object.keys(priceData);
+  const dates = Object.keys(priceData).sort().reverse();
   return res.json(jsondata("0000", "获取日期成功", dates));
 });
 
