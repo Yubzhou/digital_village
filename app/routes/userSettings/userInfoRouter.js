@@ -37,6 +37,17 @@ async function getUserByID(userID) {
     if (result.length === 0) return null;
     const user = result[0];
     delete user["hashed_password"]; // 删除密码信息
+    // 隐私手机号信息
+    user["phone_number"] && (user["phone_number"] = user["phone_number"].slice(0, 3) + "*****" + user["phone_number"].slice(8));
+    // 隐私邮箱信息，根据邮箱用户名长度动态隐藏
+    const email = user["email"];
+    if (email) {
+      // 获取邮箱用户名和邮箱域名
+      const [emailName, emailDomain] = email.split("@");
+      // 显示邮箱用户名长度的前30%
+      const emailNameLength = Math.round(emailName.length * 0.3);
+      user["email"] = emailName.slice(0, emailNameLength) + "*".repeat(emailName.length - emailNameLength + 1) + emailDomain;
+    }
     // 获取用户发布的问政文章总数
     const articleCount = await getArticleCount(userID);
     // 获取用户的总投票数
