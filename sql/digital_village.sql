@@ -199,9 +199,27 @@ CREATE TABLE IF NOT EXISTS `notifications`
 
 
 # 城市编码表
-CREATE TABLE IF NOT EXISTS `city_codes`
-(
-    `adcode`   INT PRIMARY KEY COMMENT '区域编码',
-    `name`     VARCHAR(255) COMMENT '名字'
-);
+# CREATE TABLE IF NOT EXISTS `city_codes`
+# (
+#     `adcode`   INT PRIMARY KEY COMMENT '区域编码',
+#     `name`     VARCHAR(255) COMMENT '名字'
+# );
 
+
+# # 医院信息表
+# CREATE TABLE hospitals
+# (
+#     id                 INT AUTO_INCREMENT PRIMARY KEY, -- 唯一标识符
+#     hospital_name      VARCHAR(255) NOT NULL,          -- 医院名称
+#     province           VARCHAR(50)  NOT NULL,          -- 省份
+#     city               VARCHAR(50)  NOT NULL,          -- 城市
+#     hospital_level     TINYINT,                        -- 医院等级（31、32、33、21、22、23、11、12、13分别表示三级甲等、三级乙等、三级丙等、二级甲等、二级乙等、二级丙等、一级甲等、一级乙等、一级丙等）
+#     expertise_diseases TEXT,                           -- 擅长病症，可能包含多个，用TEXT类型存储较长的文本
+#     address            VARCHAR(255),                   -- 医院地址，可允许为空
+#     phone_number       VARCHAR(255),                   -- 医院电话，可允许为空（多个电话用逗号分隔）
+#     email              VARCHAR(255),                   -- 医院邮箱，可允许为空（多个邮箱用逗号分隔）
+#     website            VARCHAR(255),                   -- 医院网站，可允许为空
+#     INDEX (province),                                  -- 为省份字段创建索引，便于基于省份的查询
+#     INDEX (city),                                      -- 为城市字段创建索引，便于基于城市的查询
+#     INDEX (hospital_level)                             -- 为医院等级字段创建索引，便于基于等级的查询
+# )

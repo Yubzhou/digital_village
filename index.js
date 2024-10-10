@@ -29,6 +29,7 @@ import eParticipationRouter from "./app/routes/eParticipationRouter.js";
 import { router as voteRouter, saveCacheOnExit } from "./app/routes/voteRouter.js";
 import userSettingsRouter from "./app/routes/userSettingsRouter.js";
 import grainPriceRouter from "./app/routes/grainPriceRouter.js";
+import { router as OllamaRouter, unloadModels } from "./app/routes/ollamaRouter.js"; // ollama 路由
 
 // 导入自定义工具
 import jsondata from "./app/utils/jsondata.js";
@@ -99,6 +100,9 @@ app.use("/api", userSettingsRouter);
 // 使用路由中间件，粮食收购价路由
 app.use("/api", grainPriceRouter);
 
+// 使用路由中间件，ollama路由
+app.use("/api", OllamaRouter);
+
 // 处理 404 错误
 app.all("*", (req, res) => {
   res.status(404).send("<h1>404 Not Found</h1>");
@@ -127,6 +131,8 @@ async function exitHandler() {
     // 关闭数据库连接池
     await pool.end();
     console.log("Database connection pool closed.");
+    // 卸载 ollama 模型
+    await unloadModels();
   } catch (err) {
     console.log(err);
   }
