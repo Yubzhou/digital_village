@@ -1,11 +1,11 @@
 import express from "express";
 import jwt from "jsonwebtoken";
 
-import { executeSql } from "../utils/dbTools.js";
-import jsondata from "../utils/jsondata.js";
+import { executeSql } from "../../utils/dbTools.js";
+import jsondata from "../../utils/jsondata.js";
 
 // 导入jwtConfig配置文件
-import jwtConfig from "../config/jwtConfig.js";
+import jwtConfig from "../../config/jwtConfig.js";
 
 const router = express.Router();
 

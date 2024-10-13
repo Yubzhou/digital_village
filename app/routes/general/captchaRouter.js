@@ -1,7 +1,7 @@
 import express from "express";
-import { executeSql } from "../utils/dbTools.js";
-import createCaptcha from "../utils/captchaTools.js";
-import jsondata from "../utils/jsondata.js";
+import { executeSql } from "../../utils/dbTools.js";
+import createCaptcha from "../../utils/general/captchaTools.js";
+import jsondata from "../../utils/jsondata.js";
 
 const router = express.Router();
 

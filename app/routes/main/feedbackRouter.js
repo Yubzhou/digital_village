@@ -1,8 +1,8 @@
 import express from "express";
-import { executeSql, querySql } from "../utils/dbTools.js";
-import jsondata from "../utils/jsondata.js";
-import adminAuthMiddleware from "../middlewares/adminAuthMiddleware.js";
-import getOptions from "../utils/paginationTools.js";
+import { executeSql, querySql } from "../../utils/dbTools.js";
+import jsondata from "../../utils/jsondata.js";
+import adminAuthMiddleware from "../../middlewares/adminAuthMiddleware.js";
+import getOptions from "../../utils/main/paginationTools.js";
 
 const router = express.Router();
 

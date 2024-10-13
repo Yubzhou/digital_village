@@ -1,7 +1,7 @@
 import express from "express";
-import jsondata from "../../utils/jsondata.js";
-import { getNotificationList, updateUserHasNewNotification } from "../../utils/notificationTools.js";
-import { executeSql } from "../../utils/dbTools.js";
+import jsondata from "../../../utils/jsondata.js";
+import { getNotificationList, updateUserHasNewNotification } from "../../../utils/main/notificationTools.js";
+import { executeSql } from "../../../utils/dbTools.js";
 
 const router = express.Router();
 

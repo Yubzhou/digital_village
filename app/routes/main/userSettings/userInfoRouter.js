@@ -1,6 +1,6 @@
 import express from "express";
-import { executeSql } from "../../utils/dbTools.js";
-import jsondata from "../../utils/jsondata.js";
+import { executeSql } from "../../../utils/dbTools.js";
+import jsondata from "../../../utils/jsondata.js";
 
 const router = express.Router();
 

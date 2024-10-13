@@ -1,12 +1,12 @@
 import express from "express";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import { executeSql } from "../utils/dbTools.js";
-import { checkEmpty, checkAccount } from "../utils/checkData.js";
-import jsondata from "../utils/jsondata.js";
+import { executeSql } from "../../utils/dbTools.js";
+import { checkEmpty, checkAccount } from "../../utils/checkData.js";
+import jsondata from "../../utils/jsondata.js";
 
 // 导入jwtConfig配置文件
-import jwtConfig from "../config/jwtConfig.js";
+import jwtConfig from "../../config/jwtConfig.js";
 
 const router = express.Router();
 
@@ -68,7 +68,7 @@ router.post("/login", async (req, res) => {
   const { account, password } = req.body;
 
   if (!checkEmpty([account, password])) {
-    return res.status(400).json(jsondata("1001", "账号或密码不能为空", ""));
+    return res.json(jsondata("1001", "账号或密码不能为空", ""));
   }
 
   try {
@@ -77,7 +77,7 @@ router.post("/login", async (req, res) => {
     // 验证密码, 同步方法
     const isMatch = bcrypt.compareSync(password, user.hashed_password);
     if (!isMatch) {
-      return res.status(401).json(jsondata("1003", "密码错误", ""));
+      return res.json(jsondata("1003", "密码错误", ""));
     }
 
     // 生成token
@@ -85,7 +85,7 @@ router.post("/login", async (req, res) => {
     // 登录成功
     return res.json(jsondata("0000", "登录成功", { userID: user.user_id, username: user.username, isAdmin: user.is_admin, profile: user.profile, tokens: BearerTokens }));
   } catch (error) {
-    return res.status(500).json(jsondata("1001", `登录失败: ${error.message}`, error));
+    return res.json(jsondata("1001", `登录失败: ${error.message}`, error));
   }
 });
 

@@ -1,8 +1,8 @@
 import express from "express";
 const router = express.Router();
 
-import jsondata from "../utils/jsondata.js";
-import { executeSql, querySql } from "../utils/dbTools.js";
+import jsondata from "../../utils/jsondata.js";
+import { executeSql, querySql } from "../../utils/dbTools.js";
 
 // 成功响应码
 const SUCCESS_MESSAGE = "0000";

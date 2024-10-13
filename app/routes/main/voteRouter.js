@@ -1,9 +1,9 @@
 import express from "express";
 
 // 导入自定义模块
-import { executeSql, getConnection, insertMany } from "../utils/dbTools.js";
-import jsondata from "../utils/jsondata.js";
-import adminAuthMiddleware from "../middlewares/adminAuthMiddleware.js";
+import { executeSql, getConnection, insertMany } from "../../utils/dbTools.js";
+import jsondata from "../../utils/jsondata.js";
+import adminAuthMiddleware from "../../middlewares/adminAuthMiddleware.js";
 import activityPictureRouter from "./uploads/activityPictureRouter.js";
 
 const router = express.Router();

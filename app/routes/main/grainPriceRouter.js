@@ -5,7 +5,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import jsondata from "../utils/jsondata.js";
+import jsondata from "../../utils/jsondata.js";
 
 const router = express.Router();
 
@@ -15,7 +15,7 @@ const __dirname = path.dirname(__filename);
 
 // 从json文件获取粮食收购价格数据
 function getGrainPriceData() {
-  const priceData = fs.readFileSync(path.resolve(__dirname, "../data/grainPrice.json"), "utf-8");
+  const priceData = fs.readFileSync(path.resolve(__dirname, "../../data/grainPrice.json"), "utf-8");
   return JSON.parse(priceData);
 }
 

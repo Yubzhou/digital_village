@@ -6,8 +6,8 @@ import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import { executeSql } from "../../utils/dbTools.js";
-import jsondata from "../../utils/jsondata.js";
+import { executeSql } from "../../../utils/dbTools.js";
+import jsondata from "../../../utils/jsondata.js";
 
 const router = express.Router();
 

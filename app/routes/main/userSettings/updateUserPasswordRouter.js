@@ -1,8 +1,8 @@
 import express from "express";
 import bcrypt from "bcryptjs";
-import { executeSql } from "../../utils/dbTools.js";
-import jsondata from "../../utils/jsondata.js";
-import { checkPassword } from "../../utils/checkData.js";
+import { executeSql } from "../../../utils/dbTools.js";
+import jsondata from "../../../utils/jsondata.js";
+import { checkPassword } from "../../../utils/checkData.js";
 
 const router = express.Router();
 

@@ -6,9 +6,9 @@ import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
 
-import { executeSql } from "../../utils/dbTools.js";
-import jsondata from "../../utils/jsondata.js";
-import adminAuthMiddleware from "../../middlewares/adminAuthMiddleware.js";
+import { executeSql } from "../../../utils/dbTools.js";
+import jsondata from "../../../utils/jsondata.js";
+import adminAuthMiddleware from "../../../middlewares/adminAuthMiddleware.js";
 
 const router = express.Router();
 

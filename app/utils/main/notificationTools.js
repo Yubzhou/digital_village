@@ -1,10 +1,10 @@
 // 消息通知工具
 
 // 导入自定义工具
-import { executeSql, querySql } from "./dbTools.js";
-import getOptions from "./paginationTools.js";
+import { executeSql } from "../dbTools.js";
+import getOptions from ".././main/paginationTools.js";
 // 导入配置
-import { NOTIFICATION_TYPE } from "../config/config.js";
+import { NOTIFICATION_TYPE } from "../../config/config.js";
 
 // 查找itemId文章标题
 async function findItemTitle(tableName, itemId) {

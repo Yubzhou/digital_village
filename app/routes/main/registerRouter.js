@@ -1,12 +1,12 @@
 import express from "express";
 import bcrypt from "bcryptjs";
-import { executeSql } from "../utils/dbTools.js";
-import jsondata from "../utils/jsondata.js";
-import { checkEmpty, checkAccount, checkPassword, checkCaptcha } from "../utils/checkData.js";
+import { executeSql } from "../../utils/dbTools.js";
+import jsondata from "../../utils/jsondata.js";
+import { checkEmpty, checkUsername, checkPassword, checkCaptcha, checkPhone } from "../../utils/checkData.js";
 
 const router = express.Router();
 
-// 检查验证码是否正确
+// 检查数据是否正确
 async function checkData(req, res, next) {
   // 获取前端提交的表单数据
   const { username, password, phone, captchaId, captchaCode } = req.body;
@@ -14,14 +14,10 @@ async function checkData(req, res, next) {
   // 校验表单数据
   const isNotEmpty = checkEmpty([username, password, phone]);
   if (isNotEmpty) {
-    const isValidAccount = checkAccount(username);
-    if (!isValidAccount) return res.json(jsondata("1002", "注册失败", "用户名格式错误"));
-    const isValidPassword = checkPassword(password);
-    if (!isValidPassword) return res.json(jsondata("1003", "注册失败", "密码格式错误"));
-    const isValidPhone = checkAccount(phone);
-    if (!isValidPhone) return res.json(jsondata("1004", "注册失败", "手机号格式错误"));
-    const isValidCode = checkCaptcha(captchaCode);
-    if (!isValidCode) return res.json(jsondata("1005", "注册失败", "验证码格式错误"));
+    if (!checkUsername(username)) return res.json(jsondata("1002", "注册失败", "用户名格式错误"));
+    if (!checkPassword(password)) return res.json(jsondata("1003", "注册失败", "密码格式错误"));
+    if (!checkPhone(phone)) return res.json(jsondata("1004", "注册失败", "手机号格式错误"));
+    if (!checkCaptcha(captchaCode)) return res.json(jsondata("1005", "注册失败", "验证码格式错误"));
   } else {
     return res.json(jsondata("1001", "注册失败", "表单数据不能为空"));
   }
@@ -30,11 +26,11 @@ async function checkData(req, res, next) {
   const sql = "SELECT `captcha_code` FROM `captcha` WHERE `captcha_id`=? LIMIT 1";
   const result = await executeSql(sql, [captchaId]);
   if (result.length === 0) {
-    return res.json(jsondata("1006", "注册失败", "验证码已失效"));
+    return res.json(jsondata("1007", "注册失败", "验证码已失效"));
   }
   const dbCaptchaCode = result[0].captcha_code;
   if (dbCaptchaCode.toLowerCase() !== captchaCode.toLowerCase()) {
-    return res.json(jsondata("1005", "注册失败", "验证码错误"));
+    return res.json(jsondata("1006", "注册失败", "验证码错误"));
   }
   next();
 }
@@ -47,8 +43,8 @@ async function clearCaptcha(captchaId) {
     const sql = "DELETE FROM `captcha` WHERE `captcha_id`=?";
     await executeSql(sql, [captchaId]);
   } catch (error) {
-    console.log(error);
-    // throw error;
+    // console.log(error);
+    throw error;
   }
 }
 
@@ -93,15 +89,15 @@ async function insertUser(req, res) {
 router.get("/register/:username", async (req, res) => {
   const { username } = req.params;
   if (!checkEmpty([username])) {
-    return res.status(400).json(jsondata("1001", "用户名不能为空", ""));
+    return res.json(jsondata("1001", "用户名不能为空", ""));
   }
   // 数据库查询
   const sql = "SELECT 1 FROM `users` WHERE `username`=? LIMIT 1";
   const result = await executeSql(sql, [username]);
   if (result.length > 0) {
-    return res.status(400).json(jsondata("1004", "用户名已存在", ""));
+    return res.json(jsondata("1004", "用户名已存在", ""));
   }
-  res.status(200).json(jsondata("0000", "用户名可用", ""));
+  return res.json(jsondata("0000", "用户名可用", ""));
 });
 
 // 注册账户

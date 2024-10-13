@@ -4,13 +4,13 @@ import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
 // 导入自定义模块
-import { executeSql, querySql } from "../utils/dbTools.js";
-import jsondata from "../utils/jsondata.js";
-import adminAuthMiddleware from "../middlewares/adminAuthMiddleware.js";
-import { saveNotification } from "../utils/notificationTools.js";
-import getOptions from "../utils/paginationTools.js";
+import { executeSql, querySql } from "../../utils/dbTools.js";
+import jsondata from "../../utils/jsondata.js";
+import adminAuthMiddleware from "../../middlewares/adminAuthMiddleware.js";
+import { saveNotification } from "../../utils/main/notificationTools.js";
+import getOptions from "../../utils/main/paginationTools.js";
 // 导入配置文件
-import { NOTIFICATION_TYPE } from "../config/config.js";
+import { NOTIFICATION_TYPE } from "../../config/config.js";
 
 const router = express.Router();
 

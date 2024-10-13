@@ -1,6 +1,4 @@
 import express from "express";
-import cors from "cors";
-// import cookieParser from "cookie-parser";
 import path from "path";
 import { fileURLToPath } from "url";
 import https from "https";
@@ -12,46 +10,18 @@ import "./app/utils/createDirectory.js";
 import mkcertOptions from "./app/config/mkcertConfig.js";
 // 导入数据库连接池
 import pool from "./app/config/dbConfig.js";
-
-// 导入中间件
-// 导入express-jwt配置中间件，用于验证token
-import jwtAuth from "./app/middlewares/jwtAuthMiddleware.js";
-
-// 导入路由
-import userTestRouter from "./app/routes/userTestRouter.js";
-import captchaRouter from "./app/routes/captchaRouter.js";
-import loginRouter from "./app/routes/loginRouter.js";
-import registerRouter from "./app/routes/registerRouter.js";
-import logoutRouter from "./app/routes/logoutRouter.js";
-import newsRouter from "./app/routes/newsRouter.js";
-import feedbackRouter from "./app/routes/feedbackRouter.js";
-import eParticipationRouter from "./app/routes/eParticipationRouter.js";
-import { router as voteRouter, saveCacheOnExit } from "./app/routes/voteRouter.js";
-import userSettingsRouter from "./app/routes/userSettingsRouter.js";
-import grainPriceRouter from "./app/routes/grainPriceRouter.js";
-import { router as OllamaRouter, unloadModels } from "./app/routes/ollamaRouter.js"; // ollama 路由
-
 // 导入自定义工具
 import jsondata from "./app/utils/jsondata.js";
 
+// 导入general路由
+import generalRouter from "./app/routes/generalRouter.js";
+// 导入main路由
+import { router as mainRouter, saveCacheOnExit, unloadModels } from "./app/routes/mainRouter.js";
+// 导入volunteer路由
+import volunteerRouter from "./app/routes/volunteerRouter.js";
+
 const app = express();
 
-// 配置 cors 中间件
-const corsOptions = {
-  // 如果希望请求包含 cookies 或其他认证信息，这要求服务器响应中 Access-Control-Allow-Origin 必须指定一个确切的源，而不是 *。
-  origin: ["https://127.0.0.1:5500", "https://localhost:5500", "https://localhost:5173", "https://127.0.0.1:5173"], // 允许的域名，可以用数组指定多个
-  // credentials: true, // 设置为 true，允许发送 cookie
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], // 允许的HTTPS请求类型
-  allowedHeaders: ["Content-Type", "Authorization"], // 允许的请求头
-};
-// 允许跨域请求
-app.use(cors(corsOptions));
-
-// 验证token
-app.use(jwtAuth);
-
-// 解析cookie
-// app.use(cookieParser());
 // 解析请求体
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -67,41 +37,14 @@ app.get("/", (req, res) => {
   res.send("<h1>欢迎使用数字乡村服务平台</h1>");
 });
 
-// 使用路由中间件，用户路由
-app.use("/api", userTestRouter);
+app.get("/api", (req, res) => {
+  res.send("<h1>数字乡村服务平台后端API接口</h1>");
+});
 
-// 使用路由中间件，图片验证码路由
-app.use("/api", captchaRouter);
-
-// 使用路由中间件，注册路由
-app.use("/api", registerRouter);
-
-// 使用路由中间件，登录路由
-app.use("/api", loginRouter);
-
-// 使用路由中间件，登出路由
-app.use("/api", logoutRouter);
-
-// 使用路由中间件，新闻路由
-app.use("/api", newsRouter);
-
-// 使用路由中间件，留言反馈路由
-app.use("/api", feedbackRouter);
-
-// 使用路由中间件，问政路由
-app.use("/api", eParticipationRouter);
-
-// 使用路由中间件，投票路由
-app.use("/api", voteRouter);
-
-// 使用路由中间件，用户个人中心路由
-app.use("/api", userSettingsRouter);
-
-// 使用路由中间件，粮食收购价路由
-app.use("/api", grainPriceRouter);
-
-// 使用路由中间件，ollama路由
-app.use("/api", OllamaRouter);
+// 使用路由中间件
+app.use("/api", generalRouter);
+app.use("/api", mainRouter);
+app.use("/api", volunteerRouter);
 
 // 处理 404 错误
 app.all("*", (req, res) => {

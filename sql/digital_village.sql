@@ -29,12 +29,12 @@ CREATE TABLE IF NOT EXISTS `users`
 CREATE TABLE IF NOT EXISTS `refresh_tokens`
 (
     `id`      INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增键id',
-    `user_id` INT UNIQUE COMMENT '用户id',
+    `user_id` INT COMMENT '用户id',
     `iat`     VARCHAR(20) COMMENT '签发时间/s',
     `exp`     VARCHAR(20) COMMENT '过期时间/s',
+    UNIQUE KEY `user_id_unique` (`user_id`) COMMENT '用户id唯一索引',
     FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE # 级联删除或更新
 );
-
 
 # 图片验证码
 CREATE TABLE IF NOT EXISTS `captcha`
@@ -141,11 +141,15 @@ CREATE TABLE IF NOT EXISTS `vote_activities`
 CREATE TABLE IF NOT EXISTS `user_vote_records`
 (
     `record_id`        INT AUTO_INCREMENT PRIMARY KEY,
-    `user_id`          INT NOT NULL COMMENT '用户id',
-    `vote_activity_id` INT NOT NULL COMMENT '投票活动id',
+    `user_id`          INT      NOT NULL COMMENT '用户id',
+    `vote_activity_id` INT      NOT NULL COMMENT '投票活动id',
+    `vote_time`        DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '投票时间',
     UNIQUE KEY `unique_user_vote` (`user_id`, `vote_activity_id`),
     FOREIGN KEY (`vote_activity_id`) REFERENCES `vote_activities` (`activity_id`) ON DELETE CASCADE ON UPDATE CASCADE # 级联删除或更新
 );
+
+ALTER TABLE `user_vote_records`
+    ADD `vote_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '投票时间';
 
 # 添加外键
 # ALTER TABLE `user_vote_records`
@@ -223,3 +227,69 @@ CREATE TABLE IF NOT EXISTS `notifications`
 #     INDEX (city),                                      -- 为城市字段创建索引，便于基于城市的查询
 #     INDEX (hospital_level)                             -- 为医院等级字段创建索引，便于基于等级的查询
 # )
+
+
+# 志愿者信息表
+CREATE TABLE IF NOT EXISTS `volunteers`
+(
+    `volunteer_id`        INT          NOT NULL AUTO_INCREMENT COMMENT '志愿者ID（自增主键）',
+    `phone_number`        CHAR(11)     NOT NULL COMMENT '联系电话（作为登录账号）',
+    `hashed_password`     VARCHAR(255) NOT NULL COMMENT '加密后的密码',
+    `real_name`           VARCHAR(50)  NOT NULL COMMENT '志愿者真实姓名',
+    `id_number`           CHAR(18)     NOT NULL COMMENT '证件号码（身份证）',
+    `gender`              TINYINT(1)   NOT NULL COMMENT '性别（0表示女，1表示男）',
+    `birth_date`          DATE         NOT NULL COMMENT '出生日期',
+    `school_or_workplace` VARCHAR(255) COMMENT '学校/工作单位',
+    `volunteer_number`    CHAR(18)     NOT NULL COMMENT '志愿者编号（与身份证长度相同，由后端使用算法生成）',
+    `service_hours`       INT          NOT NULL DEFAULT 0 COMMENT '服务时长（单位：分钟）',
+    `registration_time`   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
+    `is_admin`            BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否为管理员',
+    PRIMARY KEY (`volunteer_id`),
+    UNIQUE KEY `phone_number_unique` (`phone_number`) COMMENT '联系电话（账号）唯一性约束',
+    UNIQUE KEY `volunteer_number_unique` (`volunteer_number`) COMMENT '志愿者编号唯一性约束'
+) COMMENT ='志愿者信息表';
+
+
+# refresh_tokens_volunteers表结构 -志愿者账号表的
+CREATE TABLE IF NOT EXISTS `refresh_tokens_volunteers`
+(
+    `id`           INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增键id',
+    `volunteer_id` INT COMMENT '志愿者id',
+    `iat`          VARCHAR(20) COMMENT '签发时间/s',
+    `exp`          VARCHAR(20) COMMENT '过期时间/s',
+    UNIQUE KEY `volunteer_id_unique` (`volunteer_id`) COMMENT '用户id唯一索引',
+    FOREIGN KEY (`volunteer_id`) REFERENCES `volunteers` (`volunteer_id`) ON DELETE CASCADE ON UPDATE CASCADE # 级联删除或更新
+);
+
+
+# 志愿活动表
+CREATE TABLE IF NOT EXISTS `volunteer_activities`
+(
+    `activity_id`       INT          NOT NULL AUTO_INCREMENT COMMENT '志愿者活动id',
+    `activity_name`     VARCHAR(255) NOT NULL COMMENT '志愿者活动名字',
+    `activity_content`  TEXT         NOT NULL COMMENT '志愿者活动内容',
+    `activity_cover`    VARCHAR(255) COMMENT '用户上传的活动封面url，如果没有则使用默认封面',
+    `activity_location` VARCHAR(255) NOT NULL COMMENT '活动地点',
+    `number_of_recuits` INT COMMENT '志愿者招募人数',
+    `contact_name`      VARCHAR(50)  NOT NULL COMMENT '活动联系人姓名',
+    `contact_phone`     CHAR(11)     NOT NULL COMMENT '联系人手机号',
+    `publish_time`      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '志愿活动发布时间',
+    `start_time`        DATETIME     NOT NULL COMMENT '开始时间',
+    `end_time`          DATETIME     NOT NULL COMMENT '结束时间',
+    `is_ended`          BOOLEAN      NOT NULL DEFAULT FALSE COMMENT ' 活动是否结束，默认未结束 ',
+    PRIMARY KEY (`activity_id`)
+) COMMENT '志愿活动表';
+
+# 志愿活动报名表
+CREATE TABLE IF NOT EXISTS `volunteer_activity_registration`
+(
+    `id`                INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增键',
+    `activity_id`       INT          NOT NULL COMMENT '志愿者活动id',
+    `user_id`           INT          NOT NULL COMMENT '用户id',
+    `real_name`         VARCHAR(25)  NOT NULL COMMENT '真实姓名',
+    `phone_number`      VARCHAR(20)  NOT NULL COMMENT '联系电话',
+    `work_unit`         VARCHAR(255) NOT NULL COMMENT '工作单位',
+    `registration_time` DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '报名时间',
+    `status`            TINYINT      NOT NULL DEFAULT 1 COMMENT '1, 2, 3, 4, 5分别表示pending, approved, rejected, completed, incomplete',
+    `comment`           TEXT COMMENT '管理员给志愿者此次活动的备注，比如设置status为incomplete的原因'
+) COMMENT '志愿活动报名表';
