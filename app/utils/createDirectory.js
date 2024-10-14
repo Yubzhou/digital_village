@@ -28,3 +28,6 @@ createDirectory(dirPath);
 // 投票图片上传目录
 dirPath = './app/public/uploads/vote';
 createDirectory(dirPath);
+// 志愿者模块上传目录
+dirPath = './app/public/uploads/volunteer';
+createDirectory(dirPath);

@@ -1,10 +1,12 @@
-// 上传用户头像接口，仅允许上传一张图片
+// 上传志愿活动封面接口，仅允许上传一张图片
 
 import express from "express";
 import fs from "fs/promises";
 import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
+
+import adminAuthMiddleware from "../../../middlewares/adminAuthMiddleware.js";
 
 import { executeSql } from "../../../utils/dbTools.js";
 import jsondata from "../../../utils/jsondata.js";
@@ -16,7 +18,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 自定义上传文件存储配置
-const dir = path.resolve(__dirname, "../../../public/uploads/avatar");
+const dir = path.resolve(__dirname, "../../../public/uploads/volunteer");
 console.log("图片上传目录：" + dir);
 
 // 存储位置
@@ -60,44 +62,46 @@ async function deleteFile(filePath) {
   }
 }
 
-// 上传用户头像接口，仅允许上传一张图片, 且上传图片的name属性必须为avatar
-router.post("/upload/avatar", upload.single("avatar"), async (req, res) => {
-  // 获取用户ID
-  const { sub: userID } = req.auth;
+// 需要管理员权限
+// 上传用户头像接口，仅允许上传一张图片, 且上传图片的name属性必须为cover
+router.post("/upload/cover/:id(\\d+)", adminAuthMiddleware, upload.single("cover"), async (req, res) => {
+  // 获取志愿活动id
+  const activityID = req.params.id;
+
   // 获取上传的图片
-  const avatar = req.file;
-  if (!avatar) {
+  const cover = req.file;
+  if (!cover) {
     return res.json(jsondata("1001", "上传图片失败", "上传的图片不存在 or 未选择图片"));
   }
-  // console.log("avatar: ", avatar);
-  const url = "/public/uploads/avatar/" + avatar.filename;
+  // console.log("cover: ", cover);
+  const url = "/public/uploads/volunteer/" + cover.filename;
   // console.log(url);
 
-  // 删除原来的头像
-  const user = await executeSql("SELECT `avatar` FROM `users` WHERE `user_id` =?", [userID]);
-  const oldAvatar = user[0]?.avatar;
-  if (oldAvatar) {
+  // 删除原来的封面图片
+  const volunteer = await executeSql("SELECT `activity_cover` FROM `volunteer_activities` WHERE `activity_id` =? LIMIT 1", [activityID]);
+  const oldCover = volunteer[0]?.activity_cover;
+  if (oldCover) {
     // 获取原有图片的文件名
-    const oldAvatarFileName = oldAvatar.split("/").pop();
+    const oldCoverFileName = oldCover.split("/").pop();
     // 获取文件的绝对路径
-    const oldFilePath = path.join(dir, oldAvatarFileName);
+    const oldFilePath = path.join(dir, oldCoverFileName);
     console.log("oldFilePath: ", oldFilePath);
     deleteFile(oldFilePath); // 异步删除文件
   } else {
     console.log("没有找到原有图片");
   }
 
-  // 更新用户头像
-  const sql = "UPDATE `users` SET `avatar`=? WHERE `user_id`=?";
+  // 更新志愿活动封面
+  const sql = "UPDATE `volunteer_activities` SET `activity_cover`=? WHERE `activity_id`=? LIMIT 1";
   try {
-    const result = await executeSql(sql, [url, userID]);
+    const result = await executeSql(sql, [url, activityID]);
     if (result.affectedRows === 0) {
-      return res.json(jsondata("1002", "更新用户头像失败", "该用户不存在"));
+      return res.json(jsondata("1002", "更新志愿活动封面失败", "该志愿活动不存在"));
     }
-    return res.json(jsondata("0000", "更新用户头像成功", { avatar: url }));
+    return res.json(jsondata("0000", "更新志愿活动封面成功", { cover: url }));
   } catch (error) {
     // console.log(error);
-    return res.json(jsondata("1003", `更新用户头像失败: ${error.message}`, error));
+    return res.json(jsondata("1003", `更新志愿活动封面失败: ${error.message}`, error));
   }
 });
 

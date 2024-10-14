@@ -2,6 +2,17 @@
 
 import { executeSql, querySql } from "./dbTools.js";
 
+// 筛选出对象非空属性，并返回一个新对象
+function filterObj(obj) {
+  const newObj = {};
+  for (let key in obj) {
+    if (obj.hasOwnProperty(key) && obj[key]) {
+      newObj[key] = obj[key];
+    }
+  }
+  return newObj;
+}
+
 // 根据配置获取查询方式（全部获取还是分页获取）
 /*
   options参数结构如下：
@@ -18,7 +29,8 @@ function getOptions(options) {
     page: 1,
     size: 10,
   };
-  let { part, page, size } = Object.assign(defaultOptions, options);
+  const notNullOptions = filterObj(options);
+  let { part, page, size } = Object.assign(defaultOptions, notNullOptions);
   // 如果part为字符串，则转为布尔值
   if (typeof part === "string") part = part.toLowerCase() === "true";
   if (part) {

@@ -17,7 +17,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // 自定义上传文件存储配置
-const dir = path.resolve(__dirname, "../../public/uploads/vote");
+const dir = path.resolve(__dirname, "../../../public/uploads/vote");
 console.log("图片上传目录：" + dir);
 
 // 存储位置

@@ -11,7 +11,7 @@ async function getActivityList(req, res) {
     const result = await getList(baseSql, "volunteer_activities", req.query);
     return res.json(jsondata("0000", "获取活动列表成功", result));
   } catch (error) {
-    return res.json(jsondata("0001", `获取活动列表失败: ${error.message}`, error));
+    return res.json(jsondata("1001", `获取活动列表失败: ${error.message}`, error));
   }
 }
 
