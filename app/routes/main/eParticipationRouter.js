@@ -8,7 +8,7 @@ import { executeSql, querySql } from "../../utils/dbTools.js";
 import jsondata from "../../utils/jsondata.js";
 import adminAuthMiddleware from "../../middlewares/adminAuthMiddleware.js";
 import { saveNotification } from "../../utils/main/notificationTools.js";
-import getOptions from "../../utils/main/paginationTools.js";
+import { getOptions } from "../../utils/paginationTools.js";
 // 导入配置文件
 import { NOTIFICATION_TYPE } from "../../config/config.js";
 

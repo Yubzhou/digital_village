@@ -2,7 +2,7 @@
 
 // 导入自定义工具
 import { executeSql } from "../dbTools.js";
-import getOptions from ".././main/paginationTools.js";
+import { getOptions } from "../paginationTools.js";
 // 导入配置
 import { NOTIFICATION_TYPE } from "../../config/config.js";
 

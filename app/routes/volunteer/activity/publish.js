@@ -1,34 +1,23 @@
 // 发布投票活动
 
-import { executeSql } from "../../../utils/dbTools";
+// 导入自定义模块
+import { executeSql } from "../../../utils/dbTools.js";
+import jsondata from "../../../utils/jsondata.js";
 
-function publishActivity(sql, params) {
-  const activity = {
-    title: "活动标题",
-    description: "活动描述",
-    start_time: "2022-01-01 00:00:00",
-    end_time: "2022-01-01 23:59:59",
-    location: "活动地点",
-    organizer: "活动组织者",
-    participants: [],
-    status: "未开始", // 未开始、进行中、已结束
-    type: "投票", // 投票、竞赛、其他
-    options: [
-      {
-        name: "选项1",
-        votes: 0,
-      },
-      {
-        name: "选项2",
-        votes: 0,
-      },
-      {
-        name: "选项3",
-        votes: 0,
-      },
-    ],
-  };
-  console.log(activity);
+async function publishActivity(req, res) {
+  const { activity_name, activity_content, activity_cover, activity_location, number_of_recuits, contact_name, contact_phone, start_time, end_time } = req.body;
+  const sql =
+    "INSERT INTO `volunteer_activities` (`activity_name`, `activity_content`, `activity_cover`, `activity_location`, `number_of_recuits`, `contact_name`, `contact_phone`, `start_time`, `end_time`) VALUES (?,?,?,?,?,?,?,?,?)";
+  const parmas = [activity_name, activity_content, activity_cover, activity_location, number_of_recuits, contact_name, contact_phone, start_time, end_time];
+  try {
+    const result = await executeSql(sql, parmas);
+    if (result.affectedRows === 0) {
+      return res.json(jsondata("1002", "发布活动失败", ""));
+    }
+    return res.json(jsondata("0000", "发布活动成功", ""));
+  } catch (error) {
+    return res.json(jsondata("1001", `发布活动失败: ${error.message}`, error));
+  }
 }
 
-publishActivity();
+export default publishActivity;

@@ -10,6 +10,7 @@ import registerRouter from "./volunteer/registerRouter.js";
 import loginRouter from "./volunteer/loginRouter.js";
 import logoutRouter from "./volunteer/logoutRouter.js";
 import activityRouter from "./volunteer/activityRouter.js";
+import volunteerInfoRouter from "./volunteer/volunteerInfoRouter.js";
 
 const router = express.Router();
 
@@ -32,5 +33,7 @@ router.use("/volunteer", loginRouter);
 router.use("/volunteer", logoutRouter);
 // 志愿者活动相关路由
 router.use("/volunteer", activityRouter);
+// 志愿者信息相关路由
+router.use("/volunteer", volunteerInfoRouter);
 
 export default router;

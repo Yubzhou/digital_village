@@ -137,13 +137,18 @@ router.get("/register/:phone", async (req, res) => {
   if (!checkEmpty([phone])) {
     return res.json(jsondata("1001", "手机号不能为空", ""));
   }
-  // 数据库查询
-  const sql = "SELECT 1 FROM `volunteers` WHERE `phone_number`=? LIMIT 1";
-  const result = await executeSql(sql, [phone]);
-  if (result.length > 0) {
-    return res.json(jsondata("1002", "手机号已被注册", ""));
+  try {
+    // 数据库查询
+    const sql = "SELECT 1 FROM `volunteers` WHERE `phone_number`=? LIMIT 1";
+    const result = await executeSql(sql, [phone]);
+    if (result.length > 0) {
+      return res.json(jsondata("1002", "手机号已被注册", ""));
+    }
+    return res.json(jsondata("0000", "手机号可用", ""));
+  } catch (error) {
+    // console.error(error);
+    return res.json(jsondata("1003", `查询失败: ${error.message}`, error));
   }
-  return res.json(jsondata("0000", "手机号可用", ""));
 });
 
 // 注册志愿者账号
