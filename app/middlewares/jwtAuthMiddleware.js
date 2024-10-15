@@ -24,7 +24,6 @@ const jwtAuth = expressjwt({
     /\/main\/login/,
     /\/main\/refresh/,
     /^\/api\/volunteer\/?$/,
-    /\/volunteer\/register/,
     /\/volunteer\/activity\/list/,
     /\/volunteer\/activity\/detail/,
   ],

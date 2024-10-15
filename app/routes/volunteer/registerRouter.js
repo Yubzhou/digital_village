@@ -5,6 +5,8 @@ import { executeSql } from "../../utils/dbTools.js";
 import jsondata from "../../utils/jsondata.js";
 // 导入验证数据函数
 import { checkEmpty, checkPhone, checkIdCard, checkCaptcha } from "../../utils/checkData.js";
+// 导入刷新token函数
+import { refreshTokenHandler } from "../main/logoutRouter.js";
 
 const router = express.Router();
 
@@ -82,7 +84,7 @@ async function updateUserIsVolunteer(userID) {
   await executeSql(sql, [userID]);
 }
 
-async function insertVolunteerHandler(res, sql, params, userID, id_number, captchaId) {
+async function insertVolunteerHandler(res, sql, params, userID, id_number, captchaId, refreshToken) {
   let success = false;
   while (!success) {
     try {
@@ -92,16 +94,23 @@ async function insertVolunteerHandler(res, sql, params, userID, id_number, captc
       const result = await executeSql(sql, [...params, volunteerNumber]);
       // 更新用户表的is_volunteer字段
       await updateUserIsVolunteer(userID);
+      // 刷新tokens，返回tokens，让前端自行保存到localStorage中
+      const tokens = await refreshTokenHandler(refreshToken);
+      // 设置响应头
       // 注册成功，清除验证码记录，异步方法
       await clearCaptcha(captchaId);
       success = true; // 设置成功标志，跳出循环
       // 注册成功，返回响应信息
-      return res.json(jsondata("0000", "注册成功", result));
+      return res.json(jsondata("0000", "注册成功", { result, tokens }));
     } catch (error) {
-      console.error(error); // 记录错误到控制台
-      if (error.code === "ER_DUP_ENTRY" && error.sqlMessage.includes("volunteers.volunteer_number_unique")) {
-        // 如果是重复的志愿者编号错误，继续循环
-        continue;
+      // console.error(error); // 记录错误到控制台
+      if (error.code === "ER_DUP_ENTRY") {
+        if (error.sqlMessage.includes("volunteers.volunteer_number_unique")) {
+          // 如果是重复的志愿者编号错误，继续循环
+          continue;
+        } else if (error.sqlMessage.includes("volunteers.user_id_unique")) {
+          return res.json(jsondata("1100", "注册失败", "已经注册过志愿者身份"));
+        }
       }
       // 如果不是重复的志愿者编号错误，则抛出异常
       return res.json(jsondata("1001", `注册失败: ${error.message}`, error));
@@ -114,12 +123,12 @@ async function insertVolunteer(req, res) {
   // 获取用户id
   const { sub: userID } = req.auth;
   // 获取请求体数据
-  const { phone_number, real_name, id_number, gender, birth_date, captchaId } = req.body;
+  const { phone_number, real_name, id_number, gender, birth_date, captchaId, refreshToken } = req.body;
   const school_or_workplace = req.body?.school_or_workplace || null;
   // 插入数据库
   const sql = "INSERT INTO `volunteers` (`user_id`, `phone_number`, `real_name`, `id_number`, `gender`, `birth_date`, `school_or_workplace`, `volunteer_number`) VALUES (?,?,?,?,?,?,?,?)";
   const params = [userID, phone_number, real_name, id_number, gender, birth_date, school_or_workplace];
-  await insertVolunteerHandler(res, sql, params, userID, id_number, captchaId);
+  await insertVolunteerHandler(res, sql, params, userID, id_number, captchaId, refreshToken);
 }
 
 // 注册志愿者账号

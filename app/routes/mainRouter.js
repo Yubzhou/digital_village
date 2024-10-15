@@ -10,7 +10,7 @@ import jwtAuth from "../middlewares/jwtAuthMiddleware.js";
 // 导入路由
 import loginRouter from "./main/loginRouter.js";
 import registerRouter from "./main/registerRouter.js";
-import logoutRouter from "./main/logoutRouter.js";
+import { router as logoutRouter } from "./main/logoutRouter.js";
 import newsRouter from "./main/newsRouter.js";
 import feedbackRouter from "./main/feedbackRouter.js";
 import eParticipationRouter from "./main/eParticipationRouter.js";

@@ -9,18 +9,12 @@ import jwtConfig from "../../config/jwtConfig.js";
 
 const router = express.Router();
 
-// 刷新AccessToken
-router.post("/refresh", async (req, res) => {
-  // 从请求头中获取refreshToken
-  const refreshToken = req.body.refreshToken;
-
+async function refreshTokenHandler(refreshToken) {
   try {
     const decoded = jwt.verify(refreshToken, jwtConfig.REFRESH_SECRET_KEY);
     const result = await executeSql("SELECT * FROM `refresh_tokens` WHERE `user_id`=? AND `iat`=? LIMIT 1", [decoded.sub, decoded.iat]);
 
-    if (!result.length || !decoded) {
-      return res.status(401).json(jsondata("1001", "无效的刷新令牌", "Invalid refresh token"));
-    }
+    if (!result.length || !decoded) return null;
 
     // 新生成的AccessToken和RefreshToken的签发时间一样
     // const now = jwtConfig.now(); // 使用东八区时间戳（默认单位为秒）
@@ -39,7 +33,20 @@ router.post("/refresh", async (req, res) => {
     // console.log(decodedNewRefreshToken.exp - decodedNewRefreshToken.iat);
 
     // 返回新的AccessToken和RefreshToken
-    return res.json(jsondata("0000", "刷新成功", { tokens: { accessToken: newAccessToken, refreshToken: newRefreshToken } }));
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken };
+  } catch (error) {
+    throw error;
+  }
+}
+
+// 刷新AccessToken
+router.post("/refresh", async (req, res) => {
+  const { refreshToken } = req.body;
+  try {
+    const tokens = await refreshTokenHandler(refreshToken);
+    if (!tokens) return res.status(401).json(jsondata("1001", "无效的刷新令牌", "token已失效, 请重新登录"));
+    // 返回新的AccessToken和RefreshToken
+    return res.json(jsondata("0000", "刷新成功", { tokens }));
   } catch (error) {
     // console.log(error);
     if (error.name === "TokenExpiredError") {
@@ -66,4 +73,4 @@ router.post("/logout", async (req, res) => {
   }
 });
 
-export default router;
+export { router, refreshTokenHandler };
