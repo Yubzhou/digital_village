@@ -6,6 +6,7 @@ import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
 
+// 导入管理员认证中间件
 import adminAuthMiddleware from "../../../middlewares/adminAuthMiddleware.js";
 
 import { executeSql } from "../../../utils/dbTools.js";

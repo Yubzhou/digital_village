@@ -13,4 +13,10 @@ router.get("/user/info/service", async (req, res) => {
   await getInfo(req, res, fields);
 });
 
+// 获取用户全部信息
+router.get("/user/info/all", async (req, res) => {
+  // 当未传入fields参数时，默认返回全部信息
+  await getInfo(req, res);
+});
+
 export default router;

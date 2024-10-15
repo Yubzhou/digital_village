@@ -3,12 +3,9 @@ import express from "express";
 // import cors from "cors";
 // import cookieParser from "cookie-parser";
 
-// 执行创建目录函数
-import "../utils/createDirectory.js";
-
 // 导入中间件
 // 导入express-jwt配置中间件，用于验证token
-import jwtAuth from "../middlewares/main/jwtAuthMiddleware.js";
+import jwtAuth from "../middlewares/jwtAuthMiddleware.js";
 
 // 导入路由
 import loginRouter from "./main/loginRouter.js";

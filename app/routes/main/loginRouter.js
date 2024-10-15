@@ -38,11 +38,11 @@ async function getUserByAccount(account) {
 }
 
 // 生成token
-async function generateToken(user_id, username, isAdmin) {
+async function generateToken(user_id, username, isAdmin, isVolunteer) {
   // 生成的accessToken和refreshToken的签发时间一样
   // const now = jwtConfig.now(); // 使用东八区时间戳（默认单位为秒）
   const now = Math.floor(Date.now() / 1000); // 使用UTC当前时间戳（默认单位为秒）
-  const payload = { sub: user_id, username, isAdmin, iat: now, exp: now + jwtConfig.ACCESS_TOKEN_EXPIRATION };
+  const payload = { sub: user_id, username, isAdmin, isVolunteer, iat: now, exp: now + jwtConfig.ACCESS_TOKEN_EXPIRATION };
   const accessToken = jwt.sign(payload, jwtConfig.ACCESS_SECRET_KEY);
   // 为了防止生成的两个token一样，为refreshToken添加一个isRefresh字段
   payload.isRefresh = true;
@@ -81,9 +81,18 @@ router.post("/login", async (req, res) => {
     }
 
     // 生成token
-    const BearerTokens = await generateToken(user.user_id, user.username, user.is_admin);
+    const BearerTokens = await generateToken(user.user_id, user.username, user.is_admin, user.is_volunteer);
     // 登录成功
-    return res.json(jsondata("0000", "登录成功", { userID: user.user_id, username: user.username, isAdmin: user.is_admin, profile: user.profile, tokens: BearerTokens }));
+    return res.json(
+      jsondata("0000", "登录成功", {
+        userID: user.user_id,
+        username: user.username,
+        isAdmin: user.is_admin,
+        isVolunteer: user.is_volunteer,
+        profile: user.profile,
+        tokens: BearerTokens,
+      })
+    );
   } catch (error) {
     return res.json(jsondata("1001", `登录失败: ${error.message}`, error));
   }

@@ -4,6 +4,7 @@ import { executeSql, querySql } from "./dbTools.js";
 
 // 筛选出对象非空属性，并返回一个新对象
 function filterObj(obj) {
+  if (!obj) return {};
   const newObj = {};
   for (let key in obj) {
     if (obj.hasOwnProperty(key) && obj[key]) {
@@ -31,6 +32,8 @@ function getOptions(options) {
   };
   const notNullOptions = filterObj(options);
   let { part, page, size } = Object.assign(defaultOptions, notNullOptions);
+  // console.log("getOptions", { part, page, size });
+
   // 如果part为字符串，则转为布尔值
   if (typeof part === "string") part = part.toLowerCase() === "true";
   if (part) {

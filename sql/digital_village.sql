@@ -15,8 +15,12 @@ CREATE TABLE IF NOT EXISTS `users`
     `created_at`           TIMESTAMP             DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `updated_at`           TIMESTAMP             DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '修改时间',
     `is_admin`             BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否为管理员',
+    `is_volunteer`         BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否注册为志愿者',
     `has_new_notification` BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否有新的通知'
 );
+
+ALTER TABLE `users`
+    ADD COLUMN `is_volunteer` BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否注册为志愿者' AFTER `is_admin`;
 
 # ALTER TABLE `users`
 #     ADD COLUMN `has_new_notification` BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否有新的通知';
@@ -40,8 +44,12 @@ CREATE TABLE IF NOT EXISTS `refresh_tokens`
 CREATE TABLE IF NOT EXISTS `captcha`
 (
     `captcha_id`   INT AUTO_INCREMENT PRIMARY KEY COMMENT '会话ID',
-    `captcha_code` CHAR(4) NOT NULL COMMENT '4位验证码'
+    `captcha_code` CHAR(4) NOT NULL COMMENT '4位验证码',
+    `update_time`  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 );
+
+ALTER TABLE `captcha`
+    ADD COLUMN `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间';
 
 
 # 新闻
@@ -232,20 +240,20 @@ CREATE TABLE IF NOT EXISTS `notifications`
 # 志愿者信息表
 CREATE TABLE IF NOT EXISTS `volunteers`
 (
-    `volunteer_id`        INT          NOT NULL AUTO_INCREMENT COMMENT '志愿者ID（自增主键）',
-    `phone_number`        CHAR(11)     NOT NULL COMMENT '联系电话（作为登录账号）',
-    `hashed_password`     VARCHAR(255) NOT NULL COMMENT '加密后的密码',
-    `real_name`           VARCHAR(50)  NOT NULL COMMENT '志愿者真实姓名',
-    `id_number`           CHAR(18)     NOT NULL COMMENT '证件号码（身份证）',
-    `gender`              TINYINT(1)   NOT NULL COMMENT '性别（0表示女，1表示男）',
-    `birth_date`          DATE         NOT NULL COMMENT '出生日期',
+    `id`                  INT AUTO_INCREMENT COMMENT '自增键',
+    `user_id`             INT         NOT NULL COMMENT '用户id',
+    `phone_number`        CHAR(11)    NOT NULL COMMENT '联系电话',
+    `real_name`           VARCHAR(50) NOT NULL COMMENT '志愿者真实姓名',
+    `id_number`           CHAR(18)    NOT NULL COMMENT '证件号码（身份证）',
+    `gender`              TINYINT(1)  NOT NULL COMMENT '性别（0表示女，1表示男）',
+    `birth_date`          DATE        NOT NULL COMMENT '出生日期',
     `school_or_workplace` VARCHAR(255) COMMENT '学校/工作单位',
-    `volunteer_number`    CHAR(18)     NOT NULL COMMENT '志愿者编号（与身份证长度相同，由后端使用算法生成）',
-    `service_minutes`     INT          NOT NULL DEFAULT 0 COMMENT '服务时长（单位：分钟）',
-    `registration_time`   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
-    `is_admin`            BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否为管理员',
-    PRIMARY KEY (`volunteer_id`),
-    UNIQUE KEY `phone_number_unique` (`phone_number`) COMMENT '联系电话（账号）唯一性约束',
+    `volunteer_number`    CHAR(18)    NOT NULL COMMENT '志愿者编号（与身份证长度相同，由后端使用算法生成）',
+    `service_minutes`     INT         NOT NULL DEFAULT 0 COMMENT '服务时长（单位：分钟）',
+    `registration_time`   DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册成为志愿者的时间',
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE, # 级联删除或更新
+    UNIQUE KEY `user_id_unique` (`user_id`) COMMENT '用户id唯一性约束',
     UNIQUE KEY `volunteer_number_unique` (`volunteer_number`) COMMENT '志愿者编号唯一性约束'
 ) COMMENT ='志愿者信息表';
 
@@ -254,52 +262,52 @@ CREATE TABLE IF NOT EXISTS `volunteers`
 --    CHANGE COLUMN `service_hours` `service_minutes` INT NOT NULL DEFAULT 0 COMMENT '服务时长（单位：分钟）';
 
 
-# refresh_tokens_volunteers表结构 -志愿者账号表的
-CREATE TABLE IF NOT EXISTS `refresh_tokens_volunteers`
-(
-    `id`           INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增键id',
-    `volunteer_id` INT COMMENT '志愿者id',
-    `iat`          VARCHAR(20) COMMENT '签发时间/s',
-    `exp`          VARCHAR(20) COMMENT '过期时间/s',
-    UNIQUE KEY `volunteer_id_unique` (`volunteer_id`) COMMENT '用户id唯一索引',
-    FOREIGN KEY (`volunteer_id`) REFERENCES `volunteers` (`volunteer_id`) ON DELETE CASCADE ON UPDATE CASCADE # 级联删除或更新
-);
-
-
 # 志愿活动表
 CREATE TABLE IF NOT EXISTS `volunteer_activities`
 (
-    `activity_id`               INT          NOT NULL AUTO_INCREMENT COMMENT '志愿活动id',
-    `activity_name`             VARCHAR(255) NOT NULL COMMENT '志愿活动名字',
-    `activity_content`          TEXT         NOT NULL COMMENT '志愿活动内容',
-    `activity_cover`            VARCHAR(255) COMMENT '用户上传的活动封面url，如果没有则使用默认封面',
-    `activity_location`         VARCHAR(255) NOT NULL COMMENT '活动地点',
-    `number_of_recuits`         INT COMMENT '计划志愿者招募人数',
-    `current_number_of_recuits` INT COMMENT '当前已招募人数',
-    `contact_name`              VARCHAR(50)  NOT NULL COMMENT '活动联系人姓名',
-    `contact_phone`             CHAR(11)     NOT NULL COMMENT '联系人手机号',
-    `start_time`                DATETIME     NOT NULL COMMENT '开始时间',
-    `end_time`                  DATETIME     NOT NULL COMMENT '结束时间',
-    `publish_time`              DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '志愿活动发布时间',
-    `update_time`               DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '志愿活动更新时间',
-    `is_ended`                  BOOLEAN      NOT NULL DEFAULT FALSE COMMENT ' 活动是否结束，默认未结束 ',
+    `activity_id`                INT          NOT NULL AUTO_INCREMENT COMMENT '志愿活动id',
+    `activity_name`              VARCHAR(255) NOT NULL COMMENT '志愿活动名字',
+    `activity_content`           TEXT         NOT NULL COMMENT '志愿活动内容',
+    `activity_cover`             VARCHAR(255) COMMENT '用户上传的活动封面url，如果没有则使用默认封面',
+    `activity_location`          VARCHAR(255) NOT NULL COMMENT '活动地点',
+    `number_of_recruits`         INT COMMENT '计划志愿者招募人数',
+    `current_number_of_recruits` INT          NOT NULL DEFAULT 0 COMMENT '当前已招募人数',
+    `contact_name`               VARCHAR(50)  NOT NULL COMMENT '活动联系人姓名',
+    `contact_phone`              CHAR(11)     NOT NULL COMMENT '联系人手机号',
+    `start_time`                 DATETIME     NOT NULL COMMENT '开始时间',
+    `end_time`                   DATETIME     NOT NULL COMMENT '结束时间',
+    `publish_time`               DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '志愿活动发布时间',
+    `update_time`                DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '志愿活动修改时间',
+    `is_ended`                   BOOLEAN      NOT NULL DEFAULT FALSE COMMENT ' 活动是否结束，默认未结束 ',
     PRIMARY KEY (`activity_id`)
 ) COMMENT '志愿活动表';
+
+-- SELECT `end_time` FROM `volunteer_activities` WHERE `is_ended` = 0 ORDER BY `end_time` LIMIT 1;
 
 -- 添加update_time字段
 -- ALTER TABLE `volunteer_activities`
 --     ADD COLUMN `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '志愿活动更新时间';
 
 -- 添加current_number_of_recuits字段
-ALTER TABLE `volunteer_activities`
-    ADD COLUMN `current_number_of_recuits` INT COMMENT '当前已招募人数';
+# ALTER TABLE `volunteer_activities`
+#     ADD COLUMN `current_number_of_recuits` INT NOT NULL DEFAULT 0 COMMENT '当前已招募人数' AFTER `number_of_recuits`;
+#
+# ALTER TABLE `volunteer_activities`
+#     DROP COLUMN `current_number_of_recuits`;
+
+# ALTER TABLE `volunteer_activities`
+#     CHANGE COLUMN `number_of_recuits` `number_of_recruits` INT COMMENT '计划志愿者招募人数';
+#
+# ALTER TABLE `volunteer_activities`
+#     CHANGE COLUMN `current_number_of_recuits` `current_number_of_recruits` INT NOT NULL DEFAULT 0 COMMENT '当前已招募人数';
+
 
 # 志愿活动报名表
 CREATE TABLE IF NOT EXISTS `volunteer_activity_registration`
 (
     `id`                INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增键',
     `activity_id`       INT      NOT NULL COMMENT '志愿活动id',
-    `volunteer_id`      INT      NOT NULL COMMENT '志愿者id',
+    `user_id`           INT      NOT NULL COMMENT '用户id',
     `self_introduction` TEXT COMMENT '志愿者报名自我介绍',
     `registration_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '报名时间',
     `status`            TINYINT  NOT NULL DEFAULT 1 COMMENT '1, 2, 3, 4, 5分别表示pending, approved, rejected, completed, incomplete',
@@ -307,16 +315,69 @@ CREATE TABLE IF NOT EXISTS `volunteer_activity_registration`
 ) COMMENT '志愿活动报名表';
 
 
---    CREATE TABLE IF NOT EXISTS `test`
---    (
---        id          INT,
---        name        VARCHAR(255),
---        update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
---    );
---
---    INSERT INTO test (id, name)
---    VALUES (1, 'test1');
---
---    UPDATE test
---    SET name = 'test2'
---    WHERE id = 1;
+-- 创建存储过程（报名志愿活动）
+-- 如果用户报名时间在该活动开始时间之后，则不允许报名
+-- 如果该活动已满人，则不允许报名
+-- 如果已报名参加过该活动，则不允许报名
+-- 否则插入新的报名记录
+DELIMITER //
+CREATE FUNCTION RegisterVolunteerActivity(
+    act_id INT,
+    u_id INT,
+    intro TEXT
+) RETURNS TINYINT
+    DETERMINISTIC -- 确定性函数，返回值只依赖于输入参数
+BEGIN
+    DECLARE act_start_time DATETIME;
+    DECLARE act_number_of_recruits INT;
+    DECLARE act_current_number_of_recruits INT;
+    DECLARE act_is_ended BOOLEAN;
+    DECLARE status TINYINT DEFAULT 0;
+
+    -- 获取活动信息
+    SELECT `start_time`, `number_of_recruits`, `current_number_of_recruits`, `is_ended`
+    INTO act_start_time, act_number_of_recruits, act_current_number_of_recruits, act_is_ended
+    FROM `volunteer_activities`
+    WHERE `activity_id` = act_id;
+
+    -- 检查活动是否已经开始
+    IF act_start_time <= NOW() THEN
+        SET status = 1;
+        RETURN status; -- 立即返回，并终止函数执行
+    END IF;
+
+    -- 检查活动是否已经结束（无论是手动结束还是时间过期）
+    IF act_is_ended = 1 THEN
+        SET status = 2;
+        RETURN status; -- 立即返回，并终止函数执行
+    END IF;
+
+    -- 检查是否还有招募名额
+    IF act_number_of_recruits IS NOT NULL AND act_current_number_of_recruits >= act_number_of_recruits THEN
+        SET status = 3;
+        RETURN status; -- 立即返回，并终止函数执行
+    END IF;
+
+    -- 检查志愿者是否已经报名此活动
+    IF EXISTS (SELECT *
+               FROM `volunteer_activity_registration`
+               WHERE `activity_id` = act_id
+                 AND `user_id` = u_id) THEN
+        SET status = 4;
+        RETURN status; -- 立即返回，并终止函数执行
+    END IF;
+
+    -- 插入新的报名记录
+    INSERT INTO `volunteer_activity_registration` (activity_id, user_id, self_introduction)
+    VALUES (act_id, u_id, intro);
+    SET status = 0;
+
+    RETURN status; -- 返回最终状态消息
+END //
+DELIMITER ;
+
+
+-- SELECT RegisterVolunteerActivity(2, 3, '测试报名') AS status;
+
+
+

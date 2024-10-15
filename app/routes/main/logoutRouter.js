@@ -25,7 +25,7 @@ router.post("/refresh", async (req, res) => {
     // 新生成的AccessToken和RefreshToken的签发时间一样
     // const now = jwtConfig.now(); // 使用东八区时间戳（默认单位为秒）
     const now = Math.floor(Date.now() / 1000); // 使用UTC当前时间戳（默认单位为秒）
-    const payload = { sub: decoded.sub, username: decoded.username, isAdmin: decoded.isAdmin, iat: now, exp: now + jwtConfig.ACCESS_TOKEN_EXPIRATION };
+    const payload = { sub: decoded.sub, username: decoded.username, isAdmin: decoded.isAdmin, isVolunteer: decoded.isVolunteer, iat: now, exp: now + jwtConfig.ACCESS_TOKEN_EXPIRATION };
     const newAccessToken = jwt.sign(payload, jwtConfig.ACCESS_SECRET_KEY);
     // 为了防止生成的两个token一样，为refreshToken添加一个isRefresh字段
     payload.isRefresh = true;
