@@ -8,8 +8,6 @@ import adminAuthMiddleware from "../../middlewares/adminAuthMiddleware.js";
 import publishActivity from "./activity/publish.js";
 import uploadCover from "./uploads/activityCoverRouter.js";
 import editActivity from "./activity/edit.js";
-import getActivityList from "./activity/getList.js";
-import getActivityDetail from "./activity/getDetail.js";
 import endActivity from "./activity/end.js";
 import signupActivity from "./activity/signup.js";
 
@@ -24,12 +22,6 @@ router.patch("/activity/edit/:id(\\d+)", adminAuthMiddleware, editActivity);
 
 // 结束志愿活动（只能结束未开始的活动），需要管理员权限
 router.post("/activity/end/:id(\\d+)", adminAuthMiddleware, endActivity);
-
-// 获取志愿活动列表
-router.get("/activity/list", getActivityList);
-
-// 获取志愿活动详情
-router.get("/activity/detail/:id(\\d+)", getActivityDetail);
 
 // 志愿者报名活动
 router.post("/activity/signup/:id(\\d+)", signupActivity);

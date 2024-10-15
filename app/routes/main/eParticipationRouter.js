@@ -20,7 +20,7 @@ const __dirname = path.dirname(__filename);
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.resolve(__dirname, "../public/uploads/e-participation"));
+    cb(null, path.resolve(__dirname, "../../public/uploads/e-participation"));
   },
   filename: function (req, file, cb) {
     const ext = path.extname(file.originalname);
@@ -180,7 +180,7 @@ router.get("/e-participation/detail/:id(\\d+)", async (req, res) => {
 router.get("/e-participation/filter/:status(0|1)", async (req, res) => {
   const { part, offset, limit } = getOptions(req.query);
   const { status } = req.params;
-  console.log(status);
+  // console.log(status);
 
   // 获取总数
   const total = await getTotal(" WHERE `status`=" + status);

@@ -54,7 +54,7 @@ async function getTotolVotes() {
     }
   }
 
-  console.log("Total votes:", totalVotes);
+  // console.log("Total votes:", totalVotes);
 
   return totalVotes;
 }
@@ -179,7 +179,7 @@ let latestActiveActivityEndTime = null;
     voteCache = await getVoteCache();
     // 更新最近一次没过期的活动结束时间
     await updateVoteActivities();
-    console.log("Vote cache:", voteCache);
+    // console.log("Vote cache:", voteCache);
   } catch (error) {
     console.error("Failed to initialize vote cache:", error);
   }
@@ -233,7 +233,7 @@ async function endActivity(activityId) {
     if (result.affectedRows === 1) {
       // 更新缓存
       await updateDBPartForEnd([activityId]);
-      console.log("Vote cache partly updated for activity end:", voteCache);
+      // console.log("Vote cache partly updated for activity end:", voteCache);
       return true;
     }
     return false;
@@ -419,7 +419,7 @@ router.post("/vote", async (req, res) => {
     await insertUserVoteRecord(userID, voteCache[id].activityId);
     // 更新投票缓存
     updateVoteCache(id);
-    console.log("Vote cache updated:", voteCache);
+    // console.log("Vote cache updated:", voteCache);
     // 成功
     return res.json(jsondata("0000", "投票成功", { id, voteCount: voteCache[id].voteCount }));
   } catch (error) {

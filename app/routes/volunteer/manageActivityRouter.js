@@ -12,4 +12,7 @@ const router = express.Router();
 // 获取报名信息列表，需要管理员权限
 router.get("/signup/list", adminAuthMiddleware, getSignUpList);
 
+// 审核报名信息，需要管理员权限
+// router.post("/signup/review", adminAuthMiddleware, reviewSignUp);
+
 export default router;

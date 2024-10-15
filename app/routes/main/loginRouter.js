@@ -89,7 +89,7 @@ router.post("/login", async (req, res) => {
         username: user.username,
         isAdmin: user.is_admin,
         isVolunteer: user.is_volunteer,
-        profile: user.profile,
+        avatar: user.avatar,
         tokens: BearerTokens,
       })
     );

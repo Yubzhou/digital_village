@@ -64,13 +64,28 @@ async function getUserByID(userID) {
 router.get("/user", async (req, res) => {
   // 获取当前用户ID
   const { sub: userID } = req.auth;
-  if (!userID) return res.json(jsondata("1001", "无权限，禁止访问，请先登录", ""));
   try {
     // 查询用户信息
     const user = await getUserByID(userID);
     if (!user) return res.json(jsondata("1002", "用户不存在", ""));
     // 返回用户信息
     return res.json(jsondata("0000", "查询成功", user));
+  } catch (error) {
+    // console.log(error);
+    return res.json(jsondata("1003", `查询失败: ${error.message}`, error));
+  }
+});
+
+// 查询是否具有志愿者身份
+router.get("/user/volunteer", async (req, res) => {
+  // 获取当前用户ID
+  const { sub: userID } = req.auth;
+  try {
+    // 查询是否具有志愿者身份
+    const sql = "SELECT `is_volunteer` FROM `users` WHERE `user_id`=? LIMIT 1";
+    const result = await executeSql(sql, [userID]);
+    if (result.length === 0) return res.json(jsondata("1001", "查询失败", "用户不存在"));
+    return res.json(jsondata("0000", "查询成功", result[0]["is_volunteer"] === 1));
   } catch (error) {
     // console.log(error);
     return res.json(jsondata("1003", `查询失败: ${error.message}`, error));
