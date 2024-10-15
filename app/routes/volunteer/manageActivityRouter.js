@@ -5,14 +5,14 @@ import express from "express";
 import adminAuthMiddleware from "../../middlewares/adminAuthMiddleware.js";
 
 // 导入自定义模块
-import getSignUpList from "./manage/getList.js";
+import { getActivityList, getRegistrationList } from "./manage/getActivityList.js";
 
 const router = express.Router();
 
-// 获取报名信息列表，需要管理员权限
-router.get("/signup/list", adminAuthMiddleware, getSignUpList);
+// 获取活动审核列表，需要管理员权限
+router.get("/review/activity", adminAuthMiddleware, getActivityList);
 
-// 审核报名信息，需要管理员权限
-// router.post("/signup/review", adminAuthMiddleware, reviewSignUp);
+// 查看指定活动的报名列表，需要管理员权限
+router.get("/review/registration/:activityId(\\d+)", adminAuthMiddleware, getRegistrationList);
 
 export default router;

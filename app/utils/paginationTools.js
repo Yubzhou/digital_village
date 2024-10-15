@@ -2,16 +2,17 @@
 
 import { executeSql, querySql } from "./dbTools.js";
 
-// 筛选出对象非空属性，并返回一个新对象
-function filterObj(obj) {
-  if (!obj) return {};
-  const newObj = {};
-  for (let key in obj) {
-    if (obj.hasOwnProperty(key) && obj[key]) {
-      newObj[key] = obj[key];
+// 筛选出对象非空属性，并返回一个新对象（只包含part、page、size属性）
+function filterOptions(options) {
+  if (!options) return {};
+  const fields = ["part", "page", "size"];
+  const newOptions = {};
+  fields.forEach((field) => {
+    if (options?.[field]) {
+      newOptions[field] = options[field];
     }
-  }
-  return newObj;
+  });
+  return newOptions;
 }
 
 // 根据配置获取查询方式（全部获取还是分页获取）
@@ -30,7 +31,7 @@ function getOptions(options) {
     page: 1,
     size: 10,
   };
-  const notNullOptions = filterObj(options);
+  const notNullOptions = filterOptions(options);
   let { part, page, size } = Object.assign(defaultOptions, notNullOptions);
   // console.log("getOptions", { part, page, size });
 

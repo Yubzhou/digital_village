@@ -314,6 +314,11 @@ CREATE TABLE IF NOT EXISTS `volunteer_activity_registration`
     `comment`           TEXT COMMENT '管理员给志愿者此次活动的备注，比如设置status为incomplete的原因'
 ) COMMENT '志愿活动报名表';
 
+SELECT COUNT(*)
+FROM `volunteer_activity_registration`
+GROUP BY `activity_id`;
+SELECT `activity_id`, COUNT(*) AS total FROM `volunteer_activity_registration` WHERE `status` = 1 GROUP BY `activity_id`;
+
 
 -- 创建存储过程（报名志愿活动）
 -- 如果用户报名时间在该活动开始时间之后，则不允许报名
