@@ -10,6 +10,7 @@ import uploadCover from "./uploads/activityCoverRouter.js";
 import editActivity from "./activity/edit.js";
 import endActivity from "./activity/end.js";
 import signupActivity from "./activity/signup.js";
+import deleteActivity from "./activity/delete.js";
 
 // 发布志愿活动，需要管理员权限
 router.post("/activity/publish", adminAuthMiddleware, publishActivity);
@@ -22,6 +23,9 @@ router.patch("/activity/edit/:id(\\d+)", adminAuthMiddleware, editActivity);
 
 // 结束志愿活动（只能结束未开始的活动），需要管理员权限
 router.post("/activity/end/:id(\\d+)", adminAuthMiddleware, endActivity);
+
+// 删除志愿活动，需要管理员权限
+router.delete("/activity/delete/:id(\\d+)", adminAuthMiddleware, deleteActivity);
 
 // 志愿者报名活动
 router.post("/activity/signup/:id(\\d+)", signupActivity);

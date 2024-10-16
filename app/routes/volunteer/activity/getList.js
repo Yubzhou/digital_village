@@ -50,7 +50,7 @@ async function getActivityList(req, res) {
     if (Date.now() >= sharedData.lastEndTime) {
       // 若有快结束的志愿活动，则更新 sharedData
       const updateResult = await endActivities(ids);
-      if (updateResult.affectedRows > 0) {
+      if (updateResult && updateResult.affectedRows > 0) {
         console.log("已更新快结束的志愿活动，数量为: ", updateResult.affectedRows);
       }
     }

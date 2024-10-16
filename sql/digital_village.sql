@@ -182,7 +182,7 @@ CREATE TABLE IF NOT EXISTS `notifications`
 (
     `id`                INT AUTO_INCREMENT PRIMARY KEY COMMENT '自增键',
     `user_id`           INT          NOT NULL COMMENT '用户id',
-    `notification_type` TINYINT      NOT NULL COMMENT '通知类型，比如是问政回复的通知',
+    `notification_type` TINYINT      NOT NULL COMMENT '通知类型，比如是问政回复的通知（目前1：问政回复，2：志愿活动报名审核结果）',
     `item_id`           INT          NOT NULL COMMENT '具体类型的id，比如是哪篇问政文章的id',
     `title`             VARCHAR(25)  NOT NULL COMMENT '通知标题',
     `message`           VARCHAR(255) NOT NULL COMMENT '通知消息，如：你的xx问政已回复',
@@ -190,6 +190,7 @@ CREATE TABLE IF NOT EXISTS `notifications`
     `is_read`           BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否已读',
     UNIQUE KEY `unique_notification_index` (`user_id`, `notification_type`, `item_id`)
 );
+
 
 # 当组合唯一键冲突时，更新指定字段值
 # INSERT INTO notifications (user_id, notification_type, item_id, title, message)
@@ -266,6 +267,7 @@ CREATE TABLE IF NOT EXISTS `volunteers`
 CREATE TABLE IF NOT EXISTS `volunteer_activities`
 (
     `activity_id`                INT          NOT NULL AUTO_INCREMENT COMMENT '志愿活动id',
+    `activity_number`            CHAR(13)     NOT NULL COMMENT '志愿活动编号（由后端使用算法生成）',
     `activity_name`              VARCHAR(255) NOT NULL COMMENT '志愿活动名字',
     `activity_content`           TEXT         NOT NULL COMMENT '志愿活动内容',
     `activity_cover`             VARCHAR(255) COMMENT '用户上传的活动封面url，如果没有则使用默认封面',
@@ -279,8 +281,15 @@ CREATE TABLE IF NOT EXISTS `volunteer_activities`
     `publish_time`               DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '志愿活动发布时间',
     `update_time`                DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '志愿活动修改时间',
     `is_ended`                   BOOLEAN      NOT NULL DEFAULT FALSE COMMENT ' 活动是否结束，默认未结束 ',
-    PRIMARY KEY (`activity_id`)
+    PRIMARY KEY (`activity_id`),
+    UNIQUE KEY `activity_number_unique` (`activity_number`) COMMENT '活动编号唯一性约束'
 ) COMMENT '志愿活动表';
+
+
+# SELECT `activity_id`, `end_time` - `start_time` AS duration
+# FROM volunteer_activities
+# WHERE `is_ended` = 0;
+
 
 -- SELECT `end_time` FROM `volunteer_activities` WHERE `is_ended` = 0 ORDER BY `end_time` LIMIT 1;
 
@@ -314,10 +323,12 @@ CREATE TABLE IF NOT EXISTS `volunteer_activity_registration`
     `comment`           TEXT COMMENT '管理员给志愿者此次活动的备注，比如设置status为incomplete的原因'
 ) COMMENT '志愿活动报名表';
 
-SELECT COUNT(*)
-FROM `volunteer_activity_registration`
-GROUP BY `activity_id`;
-SELECT `activity_id`, COUNT(*) AS total FROM `volunteer_activity_registration` WHERE `status` = 1 GROUP BY `activity_id`;
+
+
+           # SELECT COUNT(*)
+# FROM `volunteer_activity_registration`
+# GROUP BY `activity_id`;
+# SELECT `activity_id`, COUNT(*) AS total FROM `volunteer_activity_registration` WHERE `status` = 1 GROUP BY `activity_id`;
 
 
 -- 创建存储过程（报名志愿活动）
@@ -385,4 +396,34 @@ DELIMITER ;
 -- SELECT RegisterVolunteerActivity(2, 3, '测试报名') AS status;
 
 
+DELIMITER //
+CREATE FUNCTION DeleteVolunteerActivity(
+    act_id INT
+) RETURNS TINYINT
+    DETERMINISTIC -- 确定性函数，返回值只依赖于输入参数
+BEGIN
+    DECLARE act_start_time DATETIME;
+    DECLARE act_end_time DATETIME;
+    DECLARE status TINYINT DEFAULT 0;
 
+    -- 获取活动信息
+    SELECT `start_time`, `end_time`
+    INTO act_start_time, act_end_time
+    FROM `volunteer_activities`
+    WHERE `activity_id` = act_id;
+
+    -- 检查活动是否正在进行
+    IF act_start_time <= NOW() AND act_end_time >= NOW() THEN
+        SET status = 1;
+        RETURN status; -- 如果活动正在进行，立即返回，并终止函数执行
+    END IF;
+
+    -- 如果活动不正在进行，允许删除活动记录
+    DELETE FROM `volunteer_activities` WHERE `activity_id` = act_id;
+
+    RETURN status; -- 返回最终状态消息
+END //
+DELIMITER ;
+
+
+-- SELECT DeleteVolunteerActivity(3) AS status;

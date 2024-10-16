@@ -84,7 +84,7 @@ async function getVolunteerInfos(users) {
   for (const user of users) {
     const volunteer = result.find((item) => item.user_id === user.user_id);
     // 将志愿者信息合并到用户信息中
-    delete volunteer.id; // 隐藏无关自增键
+    delete volunteer.id; // 隐藏志愿者表的无关自增键
     delete volunteer.id_number; // 隐藏身份证号码
     Object.assign(user, volunteer);
   }
@@ -94,7 +94,7 @@ async function getVolunteerInfos(users) {
 async function getRegistrationList(req, res) {
   try {
     const activityId = req.params.activityId;
-    const sql = "SELECT `user_id`, `status` FROM `volunteer_activity_registration` WHERE `activity_id` =?";
+    const sql = "SELECT `id`, `activity_id`, `user_id`, `status`, `self_introduction` FROM `volunteer_activity_registration` WHERE `activity_id` =?";
     const total = await executeSql("SELECT COUNT(*) AS total FROM `volunteer_activity_registration` WHERE `activity_id` =?", [activityId]);
     const list = await executeSql(sql, [activityId]);
     await getVolunteerInfos(list);
