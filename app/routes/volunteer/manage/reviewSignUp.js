@@ -13,6 +13,17 @@ async function notifySignUp(userID, activityId, status) {
   await saveNotification(userID, NOTIFICATION_TYPE.VOLUNTEER_REVIEW, activityId, status);
 }
 
+// 审核报名通过更新该活动的当前招募人数
+async function updateActivityRecruitCount(activityId) {
+  const sql = "UPDATE `volunteer_activities` SET `current_number_of_recruits` = `current_number_of_recruits` + 1 WHERE `activity_id` =?";
+  try {
+    await executeSql(sql, [activityId]);
+  } catch (error) {
+    console.log(`更新活动${activityId}招募人数失败: ${error.message}`);
+  }
+}
+
+// 审核报名信息
 async function reviewSignUp(req, res) {
   const { id } = req.params;
   const { activity_id, user_id, status } = req.body;
@@ -24,6 +35,10 @@ async function reviewSignUp(req, res) {
     const result = await executeSql(sql, [status, id]);
     if (result.affectedRows === 0) {
       return res.json(jsondata("1003", "审核失败", "未找到该报名信息"));
+    }
+    // 如果审核通过，则异步更新活动的当前招募人数
+    if (status === 2) {
+      updateActivityRecruitCount(activity_id);
     }
     // 审核完成，异步通知报名者
     notifySignUp(user_id, activity_id, status);

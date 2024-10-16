@@ -59,10 +59,10 @@ async function hasNewNotificationActivities() {
   }
 }
 
-// 获取活动列表，按发布时间升序排列
+// 获取活动列表，按发布时间降序排列
 async function getActivityList(req, res) {
   try {
-    const baseSql = "SELECT * FROM `volunteer_activities` ORDER BY `activity_id` ASC";
+    const baseSql = "SELECT * FROM `volunteer_activities` ORDER BY `activity_id` DESC";
     const result = await getList(baseSql, "volunteer_activities", req.query); // 根据配置参数决定是否分页获取
     const activityIds = await hasNewNotificationActivities();
     result.list.forEach((activity) => {
@@ -77,6 +77,7 @@ async function getActivityList(req, res) {
 
 // 根据用户报名信息获取对应的用户志愿者信息
 async function getVolunteerInfos(users) {
+  if (!users || users.length === 0) return;
   const userIds = users.map((user) => user.user_id);
   const sql = "SELECT * FROM `volunteers` WHERE `user_id` IN (" + userIds.join(",") + ")";
   const result = await executeSql(sql);

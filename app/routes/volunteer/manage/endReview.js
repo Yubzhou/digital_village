@@ -17,22 +17,35 @@ async function updateStatus(activityId) {
   await executeSql(sql, [activityId]);
 }
 
-
 // 更新用户志愿服务时长（单位：分钟）
 async function updateServiceMinutes(activityId) {
-  const sql = "UPDATE `volunteers` SET `service_minutes` = 0 WHERE `activity_id` =?";
-  await executeSql(sql, [activityId]);
+  let sql;
+  // 查找完成志愿活动的用户（status = 4）
+  sql = "SELECT `user_id` FROM `volunteer_activity_registration` WHERE `activity_id` = ? AND `status` = 4";
+  let userIds = await executeSql(sql, [activityId]);
+  userIds = userIds.map((item) => item.user_id); // 数组对象转换成数组整数
+
+  if (userIds.length === 0) return; // 如果没有符合要求的用户，则直接返回
+
+  // 获取该活动的志愿时长
+  sql = "SELECT `end_time`, `start_time` FROM `volunteer_activities` WHERE `activity_id` = ? LIMIT 1";
+  const [activity] = await executeSql(sql, [activityId]);
+  const endTime = new Date(activity.end_time).getTime();
+  const startTime = new Date(activity.start_time).getTime();
+  const serviceMinutes = Math.floor((endTime - startTime) / 60000); // 单位：分钟
+
+  // 更新志愿表里面用户的志愿服务时长（在原来时间上增加）
+  sql = "UPDATE `volunteers` SET `service_minutes` = `service_minutes` + ? WHERE `user_id` IN (" + userIds.join(",") + ")";
+  await executeSql(sql, [serviceMinutes]);
 }
-
-
 
 // 默认全部审核通过，后续根据实际情况调整
 async function endReview(activityIds) {
   if (!activityIds || activityIds.length === 0) return;
-    for (let i = 0; i < activityIds.length; i++) {
-      await updateStatus(activityIds[i]);
-    }
+  for (let i = 0; i < activityIds.length; i++) {
+    await updateStatus(activityIds[i]); // 先更新完成状态
+    await updateServiceMinutes(activityIds[i]); // 再更新志愿时长，因为志愿时长是根据完成状态来更新的
+  }
 }
-
 
 export { endReview };
