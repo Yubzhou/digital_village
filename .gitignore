@@ -1,7 +1,7 @@
 # 忽略mytest文件夹及其内容
 app/mytest/
-# 忽略config文件夹及其内容，除了config文件夹下的config.js文件
-app/config/
+# 忽略config文件夹下的全部内容，除了config文件夹下的config.js文件
+app/config/*
 !app/config/config.js
 # 忽略node_modules文件夹及其内容
 node_modules/

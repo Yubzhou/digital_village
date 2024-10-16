@@ -1,4 +1,4 @@
-import { executeSql } from "../../../utils/dbTools.js";
+import { executeSql } from "../../utils/dbTools.js";
 
 // 初始化sharedVariable的lastEndTime的值
 async function initLastEndTime() {

@@ -10,7 +10,7 @@ import { executeSql } from "../../../utils/dbTools.js";
 // 5: 未完成任务
 async function updateStatus(activityId) {
   // 将报名成功的用户状态设置为审核通过
-  const sql = "UPDATE `volunteer_activity_registration` SET `status` = 4 WHERE `activity_id` =? AND `status` = 2";
+  let sql = "UPDATE `volunteer_activity_registration` SET `status` = 4 WHERE `activity_id` =? AND `status` = 2";
   await executeSql(sql, [activityId]);
   // 将报名没通过的用户状态设置为审核不通过
   sql = "UPDATE `volunteer_activity_registration` SET `status` = 5 WHERE `activity_id` =? AND `status` = 3";

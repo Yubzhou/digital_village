@@ -6,7 +6,7 @@ import jsondata from "../../../utils/jsondata.js";
 
 // 单例模式，获取共享数据
 // 如获取最近一次快结束的志愿活动时间，则可以直接从 singleton 中获取
-import { getSingletonInstance } from "./singletonInstance.js";
+import { getSingletonInstance } from "../singletonInstance.js";
 // singleton.get()返回一个对象，包含最近一次快结束的志愿活动时间 lastEndTime
 const singleton = await getSingletonInstance();
 

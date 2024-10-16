@@ -47,21 +47,35 @@ function getOptions(options) {
   }
 }
 
+// 截取sql语句，从from开始截取全部
+function subSql(baseSql) {
+  // 找到'FROM'关键字的位置
+  const idx = baseSql.toUpperCase().indexOf("FROM");
+  // 检查'FROM'是否存在
+  if (idx !== -1) {
+    // 使用slice方法截取'FROM'及其后面的字符串
+    return baseSql.slice(idx);
+  } else {
+    console.log('The SQL string does not contain "FROM".');
+    return "";
+  }
+}
+
 // 获取列表总数
-async function getTotal(tableName) {
-  const sql = "SELECT COUNT(*) AS total FROM `" + tableName + "`";
+async function getTotal(baseSql) {
+  const sql = "SELECT COUNT(*) AS total " + subSql(baseSql);
   const result = await executeSql(sql);
   return result.length > 0 ? result[0].total : 0;
 }
 
 // 获取列表数据
-async function getList(baseSql, tableName, options) {
+async function getList(baseSql, options) {
   // 获取分页配置
   const { part, offset, limit } = getOptions(options);
 
   try {
     // 获取活动列表总数
-    const total = await getTotal(tableName);
+    const total = await getTotal(baseSql);
     let result, sql;
     if (part) {
       // 如果是分页获取
