@@ -1,11 +1,11 @@
-// 自动结束活动
+// 自动结束活动中间件
 
 import { executeSql } from "../../utils/dbTools.js";
 import { endReview } from "./manage/endReview.js"; // 结束评审
 
 // 单例模式，获取共享数据
 // 如获取最近一次快结束的志愿活动时间，则可以直接从 singleton 中获取
-import { getSingletonInstance } from "./singletonInstance.js";
+import { getSingletonInstance, initSharedData } from "./singletonInstance.js";
 // singleton.get()返回一个对象，包含最近一次快结束的志愿活动时间 lastEndTime
 const singleton = await getSingletonInstance();
 const sharedData = singleton.get();
@@ -24,15 +24,17 @@ async function endActivities() {
   }
   // 异步结束评审
   endReview(activityIds);
+  // 异步更新 sharedData
+  updateData(activityIds);
 }
 
-// 更新 sharedData 的 lastEndTime
-async function updateLastEndTime() {
-  const sql = "SELECT `end_time` FROM `volunteer_activities` WHERE `is_ended` = 0 ORDER BY `end_time` ASC LIMIT 1";
-  const result = await executeSql(sql);
-  if (result.length > 0) {
-    const endTime = new Date(result[0].end_time).getTime();
-    sharedData.lastEndTime = endTime;
+// 更新 sharedData
+async function updateData(activityIds = []) {
+  // 如果结束的活动包含 sharedData 中的 lastActivityId，则更新 sharedData
+  if (activityIds.includes(sharedData.lastActivityId)) {
+    const data = await initSharedData();
+    sharedData.lastActivityId = data.activity_id;
+    sharedData.lastEndTime = new Date(data.end_time).getTime();
   }
 }
 
@@ -42,7 +44,6 @@ async function autoEndActivityMiddleware(req, res, next) {
   if (Date.now() >= sharedData.lastEndTime) {
     // 若有快结束的志愿活动，则更新 sharedData
     await endActivities();
-    await updateLastEndTime(); // 更新 sharedData 的 lastEndTime
   }
   next();
 }

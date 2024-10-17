@@ -19,6 +19,7 @@ const jwtAuth = expressjwt({
   path: [
     /^\/api\/main\/?$/,
     /\/main\/news/,
+    /\/main\/location/,
     /\/main\/grain/,
     /\/main\/register/,
     /\/main\/login/,

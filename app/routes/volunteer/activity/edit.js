@@ -28,7 +28,7 @@ async function editActivity(req, res) {
     }
     // 更新最近一次快结束的志愿活动时间
     // 内部会自动进行比较判断，如果新发布的活动结束时间比之前的快结束时间更早，则更新 lastEndTime
-    end_time && singleton.updateLastEndTime(end_time);
+    singleton.updateData(activityId, end_time);
     return res.json(jsondata("0000", "志愿活动修改成功", ""));
   } catch (error) {
     // console.log(error);

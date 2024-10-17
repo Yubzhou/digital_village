@@ -18,6 +18,7 @@ import { router as voteRouter, saveCacheOnExit } from "./main/voteRouter.js";
 import userSettingsRouter from "./main/userSettingsRouter.js";
 import grainPriceRouter from "./main/grainPriceRouter.js";
 import { router as OllamaRouter, unloadModels } from "./main/ollamaRouter.js"; // ollama 路由
+import locationRouter from "./main/locationRouter.js"; // 位置信息路由
 
 const router = express();
 
@@ -75,6 +76,9 @@ router.use("/main", grainPriceRouter);
 
 // 使用路由中间件，ollama路由
 router.use("/main", OllamaRouter);
+
+// 使用路由中间件，位置信息路由
+router.use("/main", locationRouter);
 
 // 导出路由
 export { router, saveCacheOnExit, unloadModels };

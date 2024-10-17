@@ -3,6 +3,13 @@
 import { querySql } from "../../../utils/dbTools.js";
 import jsondata from "../../../utils/jsondata.js";
 
+// 单例模式，获取共享数据
+// 如获取最近一次快结束的志愿活动时间，则可以直接从 singleton 中获取
+import { getSingletonInstance, initSharedData } from "../singletonInstance.js";
+// singleton.get()返回一个对象，包含最近一次快结束的志愿活动时间 lastEndTime
+const singleton = await getSingletonInstance();
+const sharedData = singleton.get();
+
 // 根据status生成不同提示信息
 function generateMessage(status) {
   switch (status) {
@@ -30,6 +37,15 @@ async function deleteActivity(req, res) {
     // console.log(result); // [ { status: 0 } ]
     // 返回状态码, 0表示成功，其他表示失败, 如果result?.[0]?.status为undefined or null，则返回-1
     const status = result?.[0]?.status ?? -1;
+    // 如果删除成功，且删除的活动是最近一次快结束的活动，则更新sharedData
+    if (status === 0 && sharedData.lastActivityId === activityId) {
+      // 异步更新sharedData
+      (async () => {
+        const data = await initSharedData();
+        sharedData.lastActivityId = data.activity_id;
+        sharedData.lastEndTime = new Date(data.end_time).getTime();
+      })();
+    }
     const response = generateMessage(status);
     return res.json(jsondata(...response));
   } catch (error) {

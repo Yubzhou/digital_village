@@ -30,10 +30,11 @@ async function publishActivityHandler(res, sql, parmas, end_time) {
       if (result.affectedRows === 0) {
         return res.json(jsondata("1002", "发布活动失败", ""));
       }
+      const activityID = result?.insertId;
       // 更新最近一次快结束的志愿活动时间
-      singleton.updateLastEndTime(end_time); // 内部会自动进行比较判断，如果新发布的活动结束时间比之前的快结束时间更早，则更新 lastEndTime
+      singleton.updateData(activityID, end_time); // 内部会自动进行比较判断，如果新发布的活动结束时间比之前的快结束时间更早，则更新 lastEndTime
       // 注册成功，返回响应信息
-      return res.json(jsondata("0000", "发布活动成功", { activityID: result.insertId, result }));
+      return res.json(jsondata("0000", "发布活动成功", { activityID, result }));
     } catch (error) {
       console.error(error); // 记录错误到控制台
       if (error.code === "ER_DUP_ENTRY" && error.sqlMessage.includes("volunteer_activities.activity_number_unique")) {
