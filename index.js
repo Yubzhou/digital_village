@@ -27,10 +27,13 @@ import volunteerRouter from "./app/routes/volunteerRouter.js";
 
 const app = express();
 
+// 获取协议类型
+const { PROTOCOL } = SERVER_CONFIG;
+
 // 配置 cors 中间件，允许指定的域名跨域请求
 const corsOptions = {
   // 如果希望请求包含 cookies 或其他认证信息，这要求服务器响应中 Access-Control-Allow-Origin 必须指定一个确切的源，而不是 *。
-  origin: ["https://127.0.0.1:5500", "https://localhost:5500", "https://localhost:5173", "https://127.0.0.1:5173"], // 允许的域名，可以用数组指定多个
+  origin: [`${PROTOCOL}://127.0.0.1:5500`, `${PROTOCOL}://localhost:5500`, `${PROTOCOL}://localhost:5173`, `${PROTOCOL}://127.0.0.1:5173`], // 允许的域名，可以用数组指定多个
   // credentials: true, // 设置为 true，允许发送 cookie
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"], // 允许的HTTPS请求类型
   allowedHeaders: ["Content-Type", "Authorization"], // 允许的请求头
