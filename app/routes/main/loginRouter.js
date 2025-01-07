@@ -98,4 +98,51 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// 根据user_id获取用户主要信息
+async function getUserMainInfoByUserId(userID) {
+  const sql = "SELECT * FROM `users` WHERE `user_id`=? LIMIT 1";
+  const users = await executeSql(sql, [userID]);
+  if (!users.length) throw new Error("用户不存在：用户ID无效");
+  const user = users[0];
+  return {
+    userID: user.user_id,
+    username: user.username,
+    isAdmin: user.is_admin,
+    isVolunteer: user.is_volunteer,
+    avatar: user.avatar,
+  };
+}
+
+// 校验用户是否已登录（根据用户的localStorage里面的accessToken和refreshToken判断）
+router.post("/login/check", async (req, res) => {
+  let accessToken, refreshToken; // 声明变量
+  try {
+    // 获取accessToken和refreshToken
+    ({ accessToken, refreshToken } = req.body); // 解构赋值
+
+    // 校验accessToken，token失效或解析失败会抛出异常
+    const decoded = jwt.verify(accessToken, jwtConfig.ACCESS_SECRET_KEY);
+    // 校验通过，返回登录状态
+    const userMainInfo = await getUserMainInfoByUserId(decoded.sub);
+    return res.json(jsondata("0000", "登录状态校验成功", { isLogin: true, ...userMainInfo }));
+  } catch (error) {
+    // 校验accessToken失败，尝试校验refreshToken
+    try {
+      // 校验refreshToken，token失效或解析失败会抛出异常
+      const decoded = jwt.verify(refreshToken, jwtConfig.REFRESH_SECRET_KEY);
+      // 如果refreshtoken有效，查询数据库校验
+      const sql = "SELECT * FROM `refresh_tokens` WHERE `user_id`=? AND `iat`=? LIMIT 1";
+      const result = await executeSql(sql, [decoded.sub, decoded.iat]);
+      // 如果数据库中没有该用户的refreshToken，返回未登录状态
+      if (!result.length) return res.json(jsondata("0000", "登录状态校验成功", { isLogin: false }));
+      // 校验通过，返回登录状态
+      const userMainInfo = await getUserMainInfoByUserId(decoded.sub);
+      return res.json(jsondata("0000", "登录状态校验成功", { isLogin: true, ...userMainInfo }));
+    } catch (error) {
+      // 校验refreshToken失败，返回未登录状态
+      return res.json(jsondata("0000", "登录状态校验成功", { isLogin: false }));
+    }
+  }
+});
+
 export default router;

@@ -6,7 +6,7 @@ app/config/*
 # 忽略node_modules文件夹及其内容
 node_modules/
 # 忽略 mysql_tools.py 文件内容
-utils/爬取新闻脚本/mysql_tools.py
+utils/main/crawl_news_script/mysql_tools.py
 # 忽略 public 文件夹下的全部文件
 app/public/*
 # 除了public下的.gitkeep文件，其他文件都忽略

@@ -11,6 +11,7 @@ const router = express.Router();
 
 async function refreshTokenHandler(refreshToken) {
   try {
+    // 验证RefreshToken
     const decoded = jwt.verify(refreshToken, jwtConfig.REFRESH_SECRET_KEY);
     const result = await executeSql("SELECT * FROM `refresh_tokens` WHERE `user_id`=? AND `iat`=? LIMIT 1", [decoded.sub, decoded.iat]);
 
