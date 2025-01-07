@@ -20,6 +20,7 @@ const jwtAuth = expressjwt({
     /^\/api\/main\/?$/,
     /\/main\/news/,
     /\/main\/location/,
+    /\/main\/weather/,
     /\/main\/grain/,
     /\/main\/register/,
     /\/main\/login/,

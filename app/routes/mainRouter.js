@@ -16,6 +16,7 @@ import feedbackRouter from "./main/feedbackRouter.js";
 import eParticipationRouter from "./main/eParticipationRouter.js";
 import { router as voteRouter, saveCacheOnExit } from "./main/voteRouter.js";
 import userSettingsRouter from "./main/userSettingsRouter.js";
+import weatherRouter from "./main/weatherRouter.js";
 import grainPriceRouter from "./main/grainPriceRouter.js";
 import { router as OllamaRouter, unloadModels } from "./main/ollamaRouter.js"; // ollama 路由
 import locationRouter from "./main/locationRouter.js"; // 位置信息路由
@@ -70,6 +71,9 @@ router.use("/main", voteRouter);
 
 // 使用路由中间件，用户个人中心路由
 router.use("/main", userSettingsRouter);
+
+// 使用路由中间件，粮食收购价路由
+router.use("/main", weatherRouter);
 
 // 使用路由中间件，粮食收购价路由
 router.use("/main", grainPriceRouter);
