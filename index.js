@@ -2,13 +2,17 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-import https from "https";
+// import http from "http";
+// import https from "https";
+
+// 导入全局配置文件
+import { SERVER_CONFIG } from "./app/config/config.js";
 
 // 执行创建目录函数
 import "./app/utils/createDirectory.js";
 
-// 导入mkcert配置，导入https证书
-import mkcertOptions from "./app/config/mkcertConfig.js";
+// // 导入mkcert配置，导入https证书
+// import mkcertOptions from "./app/config/mkcertConfig.js";
 // 导入数据库连接池
 import pool from "./app/config/dbConfig.js";
 // 导入自定义工具
@@ -74,10 +78,38 @@ app.use((err, req, res, next) => {
   }
 });
 
-// 创建HTTPS服务器
-const server = https.createServer(mkcertOptions, app).listen(443, () => {
-  console.log("HTTPS server running on port 443, https://localhost:443, https://127.0.0.1:443");
-});
+async function startServer(serverConfig) {
+  const { PORT, URL, PROTOCOL } = serverConfig;
+
+  try {
+    let server;
+    if (PROTOCOL === "https") {
+      // 动态导入mkcert配置，导入https证书
+      const mkcertOptions = await import("./app/config/mkcertConfig.js");
+      // 动态导入https模块
+      const https = await import('https');
+      // 创建HTTPS服务器（mkcertOptions.default表示访问模块的默认导出）
+      server = https.createServer(mkcertOptions.default, app);
+    } else if (PROTOCOL === "http") {
+      // 动态导入http模块
+      const http = await import('http');
+      // 创建HTTP服务器
+      server = http.createServer(app);
+    } else {
+      throw new Error(`Invalid server protocol: ${PROTOCOL}. Check "app/config/config.js" for valid configuration.`);
+    }
+
+    // 监听端口
+    server.listen(PORT, () => {
+      console.log(`${PROTOCOL.toUpperCase()} server running on port ${PORT}, ${URL}`);
+    });
+  } catch (err) {
+    console.error("Failed to start server:", err);
+  }
+}
+
+// 调用 startServer 并传入 SERVER_CONFIG 配置
+startServer(SERVER_CONFIG).catch(err => console.error("Error starting server:", err));
 
 // 处理服务器关闭事件
 async function exitHandler() {
