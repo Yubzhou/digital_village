@@ -43,7 +43,7 @@ app.use(cors(corsOptions));
 
 // 解析请求体
 app.use(express.json()); // 解析 JSON 请求体
-app.use(express.urlencoded({ extended: false })); // 解析 URL 编码的请求体
+app.use(express.urlencoded({ extended: true })); // 解析 URL 编码的请求体，使用 extended: true 选项开启，表示支持 nested objects 和 arrays
 
 // 自定义__filename和__dirname, 因为type：module（使用ES模块），所以不能使用__dirname
 const __filename = fileURLToPath(import.meta.url);

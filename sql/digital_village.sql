@@ -2,7 +2,6 @@ CREATE DATABASE IF NOT EXISTS `digital_village`;
 
 USE `digital_village`;
 
-
 # 用户表
 CREATE TABLE IF NOT EXISTS `users`
 (
@@ -18,16 +17,6 @@ CREATE TABLE IF NOT EXISTS `users`
     `is_volunteer`         BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否注册为志愿者',
     `has_new_notification` BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否有新的通知'
 );
-
-ALTER TABLE `users`
-    ADD COLUMN `is_volunteer` BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否注册为志愿者' AFTER `is_admin`;
-
-# ALTER TABLE `users`
-#     ADD COLUMN `has_new_notification` BOOLEAN NOT NULL DEFAULT FALSE COMMENT '是否有新的通知';
-
--- ALTER TABLE `users`
---     CHANGE `profile` `avatar` VARCHAR(255) NULL COMMENT '用户上传的头像url，如果没有则使用默认头像';
-
 
 # refresh_tokens表结构
 CREATE TABLE IF NOT EXISTS `refresh_tokens`
@@ -47,9 +36,6 @@ CREATE TABLE IF NOT EXISTS `captcha`
     `captcha_code` CHAR(4) NOT NULL COMMENT '4位验证码',
     `update_time`  DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间'
 );
-
-ALTER TABLE `captcha`
-    ADD COLUMN `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间';
 
 
 # 新闻
@@ -107,21 +93,6 @@ CREATE TABLE IF NOT EXISTS `vote_info`
     FOREIGN KEY (`vote_activity_id`) REFERENCES `vote_activities` (`activity_id`) ON DELETE CASCADE ON UPDATE CASCADE # 级联删除或更新
 );
 
--- ALTER TABLE `vote_info`
---     ADD `candidate_profile` VARCHAR(255) COMMENT '候选人的头像url，如果没有则使用默认头像' AFTER `candidate_name`;
-
-# # 添加外键
-# ALTER TABLE `vote_info`
-#     ADD CONSTRAINT `fk_vote_activity1`
-#         FOREIGN KEY (`vote_activity_id`)
-#             REFERENCES `vote_activities` (`activity_id`)
-#             ON DELETE CASCADE
-#             ON UPDATE CASCADE;
-#
-# # 删除外键
-# ALTER TABLE `vote_info`
-#     DROP FOREIGN KEY `fk_vote_activity1`;
-
 
 # 记录投票活动信息
 CREATE TABLE IF NOT EXISTS `vote_activities`
@@ -136,14 +107,6 @@ CREATE TABLE IF NOT EXISTS `vote_activities`
     PRIMARY KEY (`activity_id`)
 );
 
-# 将`activity_cover`字段添加到`description`字段后面
-# ALTER TABLE `vote_activities`
-#     ADD `activity_cover` VARCHAR(255) COMMENT '用户上传的活动封面url，如果没有则使用默认封面' AFTER `description`;
-
-# UPDATE `vote_activities`
-# SET `is_ended` = 1
-# WHERE `activity_id` IN (1, 2, 3);
-
 
 # 记录用户投票活动的表
 CREATE TABLE IF NOT EXISTS `user_vote_records`
@@ -155,26 +118,6 @@ CREATE TABLE IF NOT EXISTS `user_vote_records`
     UNIQUE KEY `unique_user_vote` (`user_id`, `vote_activity_id`),
     FOREIGN KEY (`vote_activity_id`) REFERENCES `vote_activities` (`activity_id`) ON DELETE CASCADE ON UPDATE CASCADE # 级联删除或更新
 );
-
-ALTER TABLE `user_vote_records`
-    ADD `vote_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '投票时间';
-
-# 添加外键
-# ALTER TABLE `user_vote_records`
-#     ADD CONSTRAINT `fk_vote_activity2`
-#         FOREIGN KEY (`vote_activity_id`)
-#             REFERENCES `vote_activities` (`activity_id`)
-#             ON DELETE CASCADE
-#             ON UPDATE CASCADE;
-
-# 统计已结束活动中每个活动的投票总数
--- SELECT uv.vote_activity_id AS activity_id,
---        COUNT(*)            AS total_votes
--- FROM user_vote_records uv
---          INNER JOIN
---      vote_activities va ON uv.vote_activity_id = va.activity_id
--- WHERE va.is_ended = 1
--- GROUP BY uv.vote_activity_id;
 
 
 # 记录消息通知
@@ -190,53 +133,6 @@ CREATE TABLE IF NOT EXISTS `notifications`
     `is_read`           BOOLEAN      NOT NULL DEFAULT FALSE COMMENT '是否已读',
     UNIQUE KEY `unique_notification_index` (`user_id`, `notification_type`, `item_id`)
 );
-
-
-# 当组合唯一键冲突时，更新指定字段值
-# INSERT INTO notifications (user_id, notification_type, item_id, title, message)
-# VALUES (?, ?, ?, ?, ?)
-# ON DUPLICATE KEY UPDATE title   = VALUES(title),
-#                         message = VALUES(message),
-#                         time    = CURRENT_TIMESTAMP(),
-#                         is_read = FALSE;
-
-
-# UPDATE `notifications`
-# SET `is_read` = TRUE
-# WHERE user_id = 3
-#   AND `is_read` = FALSE;
-#
-# UPDATE `notifications`
-# SET `is_read`= TRUE
-# WHERE id = 2;
-
-
-# 城市编码表
-# CREATE TABLE IF NOT EXISTS `city_codes`
-# (
-#     `adcode`   INT PRIMARY KEY COMMENT '区域编码',
-#     `name`     VARCHAR(255) COMMENT '名字'
-# );
-
-
-# # 医院信息表
-# CREATE TABLE hospitals
-# (
-#     id                 INT AUTO_INCREMENT PRIMARY KEY, -- 唯一标识符
-#     hospital_name      VARCHAR(255) NOT NULL,          -- 医院名称
-#     province           VARCHAR(50)  NOT NULL,          -- 省份
-#     city               VARCHAR(50)  NOT NULL,          -- 城市
-#     hospital_level     TINYINT,                        -- 医院等级（31、32、33、21、22、23、11、12、13分别表示三级甲等、三级乙等、三级丙等、二级甲等、二级乙等、二级丙等、一级甲等、一级乙等、一级丙等）
-#     expertise_diseases TEXT,                           -- 擅长病症，可能包含多个，用TEXT类型存储较长的文本
-#     address            VARCHAR(255),                   -- 医院地址，可允许为空
-#     phone_number       VARCHAR(255),                   -- 医院电话，可允许为空（多个电话用逗号分隔）
-#     email              VARCHAR(255),                   -- 医院邮箱，可允许为空（多个邮箱用逗号分隔）
-#     website            VARCHAR(255),                   -- 医院网站，可允许为空
-#     INDEX (province),                                  -- 为省份字段创建索引，便于基于省份的查询
-#     INDEX (city),                                      -- 为城市字段创建索引，便于基于城市的查询
-#     INDEX (hospital_level)                             -- 为医院等级字段创建索引，便于基于等级的查询
-# )
-
 
 # 志愿者信息表
 CREATE TABLE IF NOT EXISTS `volunteers`
@@ -257,10 +153,6 @@ CREATE TABLE IF NOT EXISTS `volunteers`
     UNIQUE KEY `user_id_unique` (`user_id`) COMMENT '用户id唯一性约束',
     UNIQUE KEY `volunteer_number_unique` (`volunteer_number`) COMMENT '志愿者编号唯一性约束'
 ) COMMENT ='志愿者信息表';
-
--- 将`service_hours`字段改为`service_minutes`
--- ALTER TABLE `volunteers`
---    CHANGE COLUMN `service_hours` `service_minutes` INT NOT NULL DEFAULT 0 COMMENT '服务时长（单位：分钟）';
 
 
 # 志愿活动表
@@ -286,31 +178,6 @@ CREATE TABLE IF NOT EXISTS `volunteer_activities`
 ) COMMENT '志愿活动表';
 
 
-# SELECT `activity_id`, `end_time` - `start_time` AS duration
-# FROM volunteer_activities
-# WHERE `is_ended` = 0;
-
-
--- SELECT `end_time` FROM `volunteer_activities` WHERE `is_ended` = 0 ORDER BY `end_time` LIMIT 1;
-
--- 添加update_time字段
--- ALTER TABLE `volunteer_activities`
---     ADD COLUMN `update_time` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '志愿活动更新时间';
-
--- 添加current_number_of_recuits字段
-# ALTER TABLE `volunteer_activities`
-#     ADD COLUMN `current_number_of_recuits` INT NOT NULL DEFAULT 0 COMMENT '当前已招募人数' AFTER `number_of_recuits`;
-#
-# ALTER TABLE `volunteer_activities`
-#     DROP COLUMN `current_number_of_recuits`;
-
-# ALTER TABLE `volunteer_activities`
-#     CHANGE COLUMN `number_of_recuits` `number_of_recruits` INT COMMENT '计划志愿者招募人数';
-#
-# ALTER TABLE `volunteer_activities`
-#     CHANGE COLUMN `current_number_of_recuits` `current_number_of_recruits` INT NOT NULL DEFAULT 0 COMMENT '当前已招募人数';
-
-
 # 志愿活动报名表
 CREATE TABLE IF NOT EXISTS `volunteer_activity_registration`
 (
@@ -323,12 +190,6 @@ CREATE TABLE IF NOT EXISTS `volunteer_activity_registration`
     `comment`           TEXT COMMENT '管理员给志愿者此次活动的备注，比如设置status为incomplete的原因'
 ) COMMENT '志愿活动报名表';
 
-
-
-           # SELECT COUNT(*)
-# FROM `volunteer_activity_registration`
-# GROUP BY `activity_id`;
-# SELECT `activity_id`, COUNT(*) AS total FROM `volunteer_activity_registration` WHERE `status` = 1 GROUP BY `activity_id`;
 
 
 -- 创建存储过程（报名志愿活动）
@@ -392,10 +253,12 @@ BEGIN
 END //
 DELIMITER ;
 
-
 -- SELECT RegisterVolunteerActivity(2, 3, '测试报名') AS status;
 
 
+-- 创建存储过程（删除志愿活动）
+-- 如果活动正在进行，则不允许删除
+-- 否则删除活动记录
 DELIMITER //
 CREATE FUNCTION DeleteVolunteerActivity(
     act_id INT
@@ -405,7 +268,6 @@ BEGIN
     DECLARE act_start_time DATETIME;
     DECLARE act_end_time DATETIME;
     DECLARE status TINYINT DEFAULT 0;
-
     -- 获取活动信息
     SELECT `start_time`, `end_time`
     INTO act_start_time, act_end_time
@@ -420,10 +282,8 @@ BEGIN
 
     -- 如果活动不正在进行，允许删除活动记录
     DELETE FROM `volunteer_activities` WHERE `activity_id` = act_id;
-
     RETURN status; -- 返回最终状态消息
 END //
 DELIMITER ;
-
 
 -- SELECT DeleteVolunteerActivity(3) AS status;
