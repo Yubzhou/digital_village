@@ -32,7 +32,6 @@ router.get("/feedbacks", adminAuthMiddleware, async (req, res) => {
       const sql = "SELECT `id`, `username`, `title`, `content`, `publish_time` FROM `feedbacks` ORDER BY `id` DESC";
       result = await executeSql(sql);
     }
-
     result = {
       total,
       feedbacks: result,

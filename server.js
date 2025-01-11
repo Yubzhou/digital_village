@@ -2,17 +2,11 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
-// import http from "http";
-// import https from "https";
 
 // 导入全局配置文件
 import { SERVER_CONFIG } from "./app/config/config.js";
-
 // 执行创建目录函数
 import "./app/utils/createDirectory.js";
-
-// // 导入mkcert配置，导入https证书
-// import mkcertOptions from "./app/config/mkcertConfig.js";
 // 导入数据库连接池
 import pool from "./app/config/dbConfig.js";
 // 导入自定义工具

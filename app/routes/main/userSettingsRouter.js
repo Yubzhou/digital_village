@@ -20,5 +20,4 @@ router.use("/", updateUserPasswordRouter);
 // 使用通知路由
 router.use("/", notificationRouter);
 
-
 export default router;

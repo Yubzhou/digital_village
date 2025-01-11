@@ -1,9 +1,8 @@
+// 管理员权限认证中间件
 import jsondata from "../utils/jsondata.js";
 
 function adminAuthMiddleware(req, res, next) {
   const auth = req.auth;
-  // console.log(auth);
-
   if (!auth) {
     return res.status(401).json(jsondata("1001", "未登录", ""));
   }

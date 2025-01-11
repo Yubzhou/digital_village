@@ -10,7 +10,6 @@ const KEEP_ALIVE_TIME = "1h"; // 设置模型在内存中保留的时间
 // 路由处理流式大模型响应
 router.post("/ollama/chat", async (req, res) => {
   const { messages } = req.body;
-
   try {
     // 设置stream为true以启用流式响应
     const response = await ollama.chat({
@@ -19,7 +18,6 @@ router.post("/ollama/chat", async (req, res) => {
       stream: true,
       keep_alive: KEEP_ALIVE_TIME,
     });
-
     // 设置响应头，响应普通文本，并启用流式传输
     res.setHeader("Content-Type", "text/plain; charset=utf-8");
     res.setHeader("Transfer-Encoding", "chunked");

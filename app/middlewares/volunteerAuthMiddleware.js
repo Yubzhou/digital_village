@@ -1,11 +1,8 @@
-// 志愿者认证中间件
-
+// 志愿者权限认证中间件
 import jsondata from "../utils/jsondata.js";
 
 function volunteerAuthMiddleware(req, res, next) {
   const auth = req.auth;
-  // console.log(auth);
-
   if (!auth) {
     return res.status(401).json(jsondata("1001", "未登录", ""));
   }
